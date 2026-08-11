@@ -128,7 +128,7 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | `agent/apply-proposal.ts` | Ejecuta un plan aprobado sin volver a llamar al modelo |
 | `validation/` | 7 reglas arquitectónicas computables sobre el grafo + motor extensible |
 | `alternatives/snapshots.ts` | Guardar y recuperar diseños; red de seguridad al restaurar |
-| `tools/` | 22 herramientas tipadas con Zod: escena, visión, propuesta, revisión, snapshots |
+| `tools/` | 23 herramientas tipadas con Zod: escena, visión, propuesta, revisión, snapshots |
 | `context/scene-context.ts` | Resumen compacto (~400 tokens en vez de ~120.000) |
 | `memory/conversation.ts` | Recorte por turnos y recibos de resultados antiguos |
 | `transaction/history.ts` | Colapso asíncrono a un solo paso de undo |
