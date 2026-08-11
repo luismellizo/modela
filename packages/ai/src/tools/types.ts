@@ -1,6 +1,7 @@
 import type { SceneOperations } from '@pascal-app/mcp/operations'
 import { z } from 'zod'
 import type { Proposal } from '../agent/proposal'
+import type { SnapshotStore } from '../alternatives/snapshots'
 import type { AIProvider, ToolSpec } from '../provider/types'
 
 /** What a tool can reach. Nothing else — no React, no store, no DOM. */
@@ -17,6 +18,8 @@ export type ToolContext = {
   vision?: VisionContext
   /** Present only when the host can show a plan and collect approval. */
   proposals?: ProposalContext
+  /** Present only when the host keeps snapshots. Enables alternatives. */
+  snapshots?: SnapshotStore
 }
 
 /**

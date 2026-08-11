@@ -10,9 +10,12 @@ import {
   createHttpProvider,
   createProposalTool,
   createSceneTools,
+  createSnapshotStore,
+  createSnapshotTools,
   createToolRegistry,
   createVisionTools,
   type Proposal,
+  type SnapshotSummary,
   type ToolDefinition,
 } from '@modela/ai'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -50,6 +53,10 @@ export type UseCopilot = {
   approveTool(messageId: string, callId: string, tool: string): Promise<void>
   /** Refuse a destructive tool. The scene is untouched. */
   dismissTool(messageId: string, callId: string): void
+  /** Saved designs the user can switch between. */
+  snapshots: SnapshotSummary[]
+  currentSnapshotId: string | null
+  restoreSnapshot(id: string): void
 }
 
 export function useCopilot(): UseCopilot {
@@ -58,10 +65,20 @@ export function useCopilot(): UseCopilot {
   const [running, setRunning] = useState(false)
   const [canUndo, setCanUndo] = useState(false)
 
+  const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([])
+  const [currentSnapshotId, setCurrentSnapshotId] = useState<string | null>(null)
+
   const abortRef = useRef<AbortController | null>(null)
   const confirmedRef = useRef<Set<string>>(new Set())
   // Memory lives across turns; the transcript above is only for rendering.
   const memory = useMemo(() => createConversationMemory(), [])
+  const snapshotStore = useMemo(() => createSnapshotStore({ scene: getSceneOperations() }), [])
+
+  // The store is the source of truth; React state is a mirror for rendering.
+  const syncSnapshots = useCallback(() => {
+    setSnapshots(snapshotStore.list())
+    setCurrentSnapshotId(snapshotStore.current())
+  }, [snapshotStore])
 
   useEffect(() => {
     let cancelled = false
@@ -93,6 +110,7 @@ export function useCopilot(): UseCopilot {
       ...createVisionTools(),
       createProposalTool(),
       createDesignCheckTool(),
+      ...createSnapshotTools(),
     ],
     [],
   )
@@ -110,10 +128,11 @@ export function useCopilot(): UseCopilot {
         historyStore: getHistoryStore(),
         memory,
         captureViewport,
+        snapshots: snapshotStore,
       },
       { language: typeof navigator === 'undefined' ? 'en' : navigator.language.slice(0, 2) },
     )
-  }, [memory, toolDefinitions])
+  }, [memory, snapshotStore, toolDefinitions])
 
   const patchMessage = useCallback(
     (id: string, update: (message: ChatMessage & { role: 'assistant' }) => void) => {
@@ -261,9 +280,11 @@ export function useCopilot(): UseCopilot {
         confirmedRef.current = new Set()
         abortRef.current = null
         setRunning(false)
+        // The agent may have saved or restored snapshots mid-turn.
+        syncSnapshots()
       }
     },
-    [buildAgent, patchMessage, running],
+    [buildAgent, patchMessage, running, syncSnapshots],
   )
 
   const cancel = useCallback(() => {
@@ -280,7 +301,26 @@ export function useCopilot(): UseCopilot {
     memory.clear()
     setMessages([])
     setCanUndo(false)
-  }, [memory])
+    snapshotStore.clear()
+    syncSnapshots()
+  }, [memory, snapshotStore, syncSnapshots])
+
+  const restoreSnapshot = useCallback(
+    (id: string) => {
+      if (running) return
+      snapshotStore.restore(id)
+      syncSnapshots()
+      setCanUndo(true)
+      // Told to the model as fact, so its next answer describes the design that
+      // is actually on screen.
+      const label = snapshotStore.get(id)?.label ?? id
+      memory.append({
+        role: 'assistant',
+        content: `The user switched the editor to the saved design "${label}". That is the current scene now.`,
+      })
+    },
+    [memory, running, snapshotStore, syncSnapshots],
+  )
 
   const applyPlan = useCallback(
     async (messageId: string, proposal: Proposal) => {
@@ -421,5 +461,8 @@ export function useCopilot(): UseCopilot {
     discardPlan,
     approveTool,
     dismissTool,
+    snapshots,
+    currentSnapshotId,
+    restoreSnapshot,
   }
 }

@@ -1,4 +1,5 @@
 import type { SceneOperations } from '@pascal-app/mcp/operations'
+import type { SnapshotStore } from '../alternatives/snapshots'
 import { buildSceneSummary, renderSceneSummary } from '../context/scene-context'
 import type { ConversationMemory } from '../memory/conversation'
 import { userMessage } from '../memory/conversation'
@@ -37,6 +38,8 @@ export type AgentDependencies = {
    * without it `review_viewport` tells the model to answer from scene data.
    */
   captureViewport?: () => Promise<string | null>
+  /** Enables the snapshot tools, and with them design alternatives. */
+  snapshots?: SnapshotStore
 }
 
 export type AgentOptions = {
@@ -287,6 +290,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
               limits,
               vision,
               proposals,
+              ...(deps.snapshots ? { snapshots: deps.snapshots } : {}),
               ...(input.signal ? { signal: input.signal } : {}),
             })
 

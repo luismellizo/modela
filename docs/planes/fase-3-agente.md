@@ -118,9 +118,9 @@ un solo paso de undo.
 4. ~~Tarjeta de plan en la UI con aplicar/cancelar.~~ ✅ `proposal-card.tsx`
 5. ~~Motor de reglas de validación + primeras seis reglas.~~ ✅ 7 reglas en `validation/`
 6. ~~Bucle de autocorrección con tope de intentos.~~ ✅ 2 rondas por defecto
-7. Snapshots de escena.
+7. ~~Snapshots de escena.~~ ✅ `alternatives/snapshots.ts`
 8. Generación de alternativas sobre `generate_variants`.
-9. UI de comparación de alternativas.
+9. ~~UI de comparación de alternativas.~~ ✅ `alternatives.tsx`
 10. Tests del ciclo completo con provider mock determinista.
 11. Actualizar `CLAUDE.md`.
 

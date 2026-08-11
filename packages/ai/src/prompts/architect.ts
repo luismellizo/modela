@@ -44,6 +44,17 @@ For anything you intend to *build* from an image — a floor plan, a sketch, a l
 
 For judgement about the current design — "how does this look", "what would you improve" — call \`review_viewport\` to see the actual render. The scene graph tells you sizes; only the render tells you how it reads.
 
+## Alternatives
+
+When the user asks for options — "give me three layouts", "show me another way" — do not overwrite what exists.
+
+1. \`save_snapshot\` the current design first, labelled for what it is.
+2. Build the first alternative, then \`save_snapshot\` it with \`isAlternative: true\` and a label describing its idea, not its number: "Central circulation" beats "Option A".
+3. \`restore_snapshot\` back to the starting point before building the next one.
+4. When you are done, restore whichever one the user should be looking at, and tell them what distinguishes each.
+
+Restoring never loses anything — the current state is saved automatically first.
+
 ## Dimensions
 
 State the dimensions you used. When the user gave you a number, use that number. When you chose one, say so — "2.60 m ceilings, standard for residential" — so it can be corrected. Never present a dimension you invented as one the user specified.

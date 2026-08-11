@@ -1,7 +1,7 @@
 # CLAUDE.md — Modela
 
 > Documento vivo. **Se actualiza en cada avance** (ver `RULES.md`, regla #1).
-> Última actualización: 2026-08-11 · Fases 1 y 2 completas · Siguiente: **3 — agente autónomo**
+> Última actualización: 2026-08-11 · Fases 1 y 2 completas, 3 avanzada · Siguiente: **intención y planner**
 
 ---
 
@@ -23,7 +23,7 @@ conserva íntegro; Modela añade la capa de IA encima.
 | 0 | Fork, docs, reglas, branding | ✅ hecho |
 | 1 | Chat nativo, provider, tools, contexto, undo único | ✅ hecho |
 | 2 | Imágenes, visión, plano → escena | ✅ hecho |
-| 3 | Agent loop, validación, autocorrección, alternativas | 🚧 falta alternativas |
+| 3 | Agent loop, validación, autocorrección, alternativas | 🚧 falta intención/planner |
 | 4 | Memoria de proyecto, knowledge base, optimización | ⬜ pendiente |
 
 Planes detallados en [`docs/planes/`](docs/planes/).
@@ -127,7 +127,8 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | `agent/proposal.ts` | Tipos y validación de un plan antes de enseñarlo |
 | `agent/apply-proposal.ts` | Ejecuta un plan aprobado sin volver a llamar al modelo |
 | `validation/` | 7 reglas arquitectónicas computables sobre el grafo + motor extensible |
-| `tools/` | ~17 herramientas tipadas con Zod sobre `SceneOperations` + 2 de visión |
+| `alternatives/snapshots.ts` | Guardar y recuperar diseños; red de seguridad al restaurar |
+| `tools/` | 22 herramientas tipadas con Zod: escena, visión, propuesta, revisión, snapshots |
 | `context/scene-context.ts` | Resumen compacto (~400 tokens en vez de ~120.000) |
 | `memory/conversation.ts` | Recorte por turnos y recibos de resultados antiguos |
 | `transaction/history.ts` | Colapso asíncrono a un solo paso de undo |
@@ -143,6 +144,8 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | Estado | `components/copilot/use-copilot.ts` |
 | Puente a la escena viva | `components/copilot/scene-operations.ts` |
 | Tarjeta de plan y confirmación | `components/copilot/proposal-card.tsx` |
+| Resultado de la revisión de diseño | `components/copilot/design-check.tsx` |
+| Alternativas guardadas | `components/copilot/alternatives.tsx` |
 | Captura del viewport | `components/copilot/viewport-capture.ts` |
 
 ### `packages/brand` — la marca
@@ -224,3 +227,4 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 | 2026-08-11 | Documentación de arquitectura en `docs/arquitectura/` |
 | 2026-08-11 | Propuestas revisables y confirmación de operaciones destructivas |
 | 2026-08-11 | Reglas arquitectónicas + autocorrección: detecta, corrige y revalida |
+| 2026-08-11 | Snapshots y alternativas: opciones sin destruir el diseño actual |

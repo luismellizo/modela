@@ -34,6 +34,9 @@ const VERBS: Record<string, string> = {
   review_viewport: 'Looking at the view',
   propose_plan: 'Putting a plan together',
   check_design: 'Checking the design',
+  save_snapshot: 'Saving this version',
+  restore_snapshot: 'Going back to a saved version',
+  list_snapshots: 'Listing saved versions',
 }
 
 export function ToolActivityList({ activity }: { activity: ToolActivity[] }) {

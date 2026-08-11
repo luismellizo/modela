@@ -189,9 +189,40 @@ export function createFakeScene(initial: AnyNode[] = []): FakeScene {
     clearActiveScene: () => undefined,
     loadDefault: () => undefined,
     setScene: () => undefined,
-    exportJSON: unsupported('exportJSON'),
-    exportSceneGraph: unsupported('exportSceneGraph'),
-    loadJSON: unsupported('loadJSON'),
+
+    exportJSON: () => ({
+      // Deep-cloned: a snapshot that shares structure with the live scene is
+      // not a snapshot, and that bug is invisible until a restore does nothing.
+      nodes: structuredClone(snapshot()),
+      rootNodeIds: [...rootIds],
+      collections: {},
+      materials: {},
+      installedPlugins: [],
+    }),
+
+    exportSceneGraph: () => ({
+      nodes: structuredClone(snapshot()),
+      rootNodeIds: [...rootIds],
+      collections: {},
+      materials: {},
+      installedPlugins: [],
+    }),
+
+    loadJSON: (json: unknown) => {
+      const graph = (typeof json === 'string' ? JSON.parse(json) : json) as {
+        nodes: Record<string, AnyNode>
+        rootNodeIds: string[]
+      }
+      nodes.clear()
+      rootIds.length = 0
+      for (const node of Object.values(structuredClone(graph.nodes))) {
+        nodes.set(node.id, node)
+      }
+      rootIds.push(...graph.rootNodeIds)
+      log.push(`load:${nodes.size}`)
+      pushHistory()
+    },
+
     createProject: unsupported('createProject'),
     getProjectStatus: unsupported('getProjectStatus'),
     saveScene: unsupported('saveScene'),

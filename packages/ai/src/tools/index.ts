@@ -13,6 +13,7 @@ export {
   createReadTools,
   createSceneTools,
 } from './scene'
+export { createSnapshotTools } from './snapshot-tools'
 export {
   DEFAULT_TOOL_LIMITS,
   defineTool,

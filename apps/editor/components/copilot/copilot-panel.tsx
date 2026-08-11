@@ -3,6 +3,7 @@
 import { brand } from '@modela/brand'
 import { AlertCircle, Eraser } from 'lucide-react'
 import { useCallback } from 'react'
+import { Alternatives } from './alternatives'
 import { Composer } from './composer'
 import { MessageList } from './message-list'
 import type { Attachment } from './types'
@@ -73,6 +74,13 @@ export function CopilotPanel() {
         onSuggestion={(text) => send(text, [])}
         onUndo={copilot.undoLastOperation}
         running={copilot.running}
+      />
+
+      <Alternatives
+        currentId={copilot.currentSnapshotId}
+        disabled={copilot.running}
+        onRestore={copilot.restoreSnapshot}
+        snapshots={copilot.snapshots}
       />
 
       <Composer

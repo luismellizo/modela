@@ -21,6 +21,13 @@ export {
   validateProposal,
 } from './agent/proposal'
 export {
+  type CreateSnapshotStoreOptions,
+  createSnapshotStore,
+  type Snapshot,
+  type SnapshotStore,
+  type SnapshotSummary,
+} from './alternatives/snapshots'
+export {
   type EnvLike,
   type ModelaAiConfig,
   readAiConfig,
