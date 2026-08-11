@@ -86,10 +86,10 @@ Duplicar, comparar lado a lado, fusionar decisiones puntuales.
 
 ## Orden de trabajo
 
-1. Memoria de proyecto persistente con precedencia estado > proyecto > conversación.
+1. ~~Memoria de proyecto persistente con precedencia estado > proyecto > conversación.~~ ✅
 2. Extracción automática de hechos del proyecto desde la conversación.
-3. Esquema de la base de conocimiento y primeras fichas.
-4. Tool `query_architecture_knowledge`.
+3. ~~Esquema de la base de conocimiento y primeras fichas.~~ ✅ 15 fichas en `knowledge/`
+4. ~~Tool `query_architecture_knowledge`.~~ ✅
 5. Enriquecimiento del catálogo con propiedades de diseño.
 6. Amueblado por estilo y presupuesto.
 7. Funciones objetivo de optimización.

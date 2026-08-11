@@ -37,6 +37,10 @@ const VERBS: Record<string, string> = {
   save_snapshot: 'Saving this version',
   restore_snapshot: 'Going back to a saved version',
   list_snapshots: 'Listing saved versions',
+  remember_project_fact: 'Noting that down',
+  get_project_brief: 'Recalling the brief',
+  forget_project_fact: 'Forgetting that',
+  query_architecture_knowledge: 'Checking reference dimensions',
 }
 
 export function ToolActivityList({ activity }: { activity: ToolActivity[] }) {

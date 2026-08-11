@@ -3,6 +3,7 @@ import type { SnapshotStore } from '../alternatives/snapshots'
 import { buildSceneSummary, renderSceneSummary } from '../context/scene-context'
 import type { ConversationMemory } from '../memory/conversation'
 import { userMessage } from '../memory/conversation'
+import type { ProjectMemory } from '../memory/project'
 import { buildArchitectPrompt } from '../prompts/architect'
 import type { AIProvider, Message, TokenUsage, ToolCall } from '../provider/types'
 import { ProviderError } from '../provider/types'
@@ -40,6 +41,11 @@ export type AgentDependencies = {
   captureViewport?: () => Promise<string | null>
   /** Enables the snapshot tools, and with them design alternatives. */
   snapshots?: SnapshotStore
+  /**
+   * The project brief that survives between sessions. Injected into the system
+   * turn, so the agent starts every conversation already knowing the encargo.
+   */
+  project?: ProjectMemory
 }
 
 export type AgentOptions = {
@@ -120,12 +126,15 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
       // The system turn is rebuilt from the live store every run. That is what
       // makes the scene outrank anything said earlier in the conversation.
       const summary = renderSceneSummary(buildSceneSummary(deps.scene, deps.getSelection()))
+      // The brief is rendered fresh too, so a fact remembered mid-session takes
+      // effect on the very next turn.
+      const brief = [deps.project?.render(), options.projectNotes].filter(Boolean).join('\n\n')
       const system: Message = {
         role: 'system',
         content: buildArchitectPrompt({
           sceneSummary: summary,
           ...(options.language ? { language: options.language } : {}),
-          ...(options.projectNotes ? { projectNotes: options.projectNotes } : {}),
+          ...(brief ? { projectNotes: brief } : {}),
         }),
       }
 
@@ -291,6 +300,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
               vision,
               proposals,
               ...(deps.snapshots ? { snapshots: deps.snapshots } : {}),
+              ...(deps.project ? { project: deps.project } : {}),
               ...(input.signal ? { signal: input.signal } : {}),
             })
 

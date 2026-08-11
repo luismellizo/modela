@@ -8,12 +8,15 @@ import {
   createConversationMemory,
   createDesignCheckTool,
   createHttpProvider,
+  createProjectMemory,
+  createProjectTools,
   createProposalTool,
   createSceneTools,
   createSnapshotStore,
   createSnapshotTools,
   createToolRegistry,
   createVisionTools,
+  createWebStorage,
   type Proposal,
   type SnapshotSummary,
   type ToolDefinition,
@@ -74,6 +77,18 @@ export function useCopilot(): UseCopilot {
   const memory = useMemo(() => createConversationMemory(), [])
   const snapshotStore = useMemo(() => createSnapshotStore({ scene: getSceneOperations() }), [])
 
+  // The brief outlives the tab. Web Storage rather than the scene store because
+  // it is about the encargo, not about geometry.
+  const projectMemory = useMemo(
+    () =>
+      createProjectMemory({
+        ...(typeof window === 'undefined'
+          ? {}
+          : { storage: createWebStorage('modela.project-brief', window.localStorage) }),
+      }),
+    [],
+  )
+
   // The store is the source of truth; React state is a mirror for rendering.
   const syncSnapshots = useCallback(() => {
     setSnapshots(snapshotStore.list())
@@ -111,6 +126,7 @@ export function useCopilot(): UseCopilot {
       createProposalTool(),
       createDesignCheckTool(),
       ...createSnapshotTools(),
+      ...createProjectTools(),
     ],
     [],
   )
@@ -129,10 +145,11 @@ export function useCopilot(): UseCopilot {
         memory,
         captureViewport,
         snapshots: snapshotStore,
+        project: projectMemory,
       },
       { language: typeof navigator === 'undefined' ? 'en' : navigator.language.slice(0, 2) },
     )
-  }, [memory, snapshotStore, toolDefinitions])
+  }, [memory, projectMemory, snapshotStore, toolDefinitions])
 
   const patchMessage = useCallback(
     (id: string, update: (message: ChatMessage & { role: 'assistant' }) => void) => {

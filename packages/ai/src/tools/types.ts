@@ -2,6 +2,7 @@ import type { SceneOperations } from '@pascal-app/mcp/operations'
 import { z } from 'zod'
 import type { Proposal } from '../agent/proposal'
 import type { SnapshotStore } from '../alternatives/snapshots'
+import type { ProjectMemory } from '../memory/project'
 import type { AIProvider, ToolSpec } from '../provider/types'
 
 /** What a tool can reach. Nothing else — no React, no store, no DOM. */
@@ -20,6 +21,8 @@ export type ToolContext = {
   proposals?: ProposalContext
   /** Present only when the host keeps snapshots. Enables alternatives. */
   snapshots?: SnapshotStore
+  /** Present only when the host persists a project brief across sessions. */
+  project?: ProjectMemory
 }
 
 /**

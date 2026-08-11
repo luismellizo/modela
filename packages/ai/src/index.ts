@@ -41,6 +41,7 @@ export {
   type SelectionSummary,
   type SpaceSummary,
 } from './context/scene-context'
+export * from './knowledge'
 export {
   assistantMessage,
   type ConversationMemory,
@@ -48,6 +49,15 @@ export {
   createConversationMemory,
   userMessage,
 } from './memory/conversation'
+export {
+  type CreateProjectMemoryOptions,
+  createProjectMemory,
+  createWebStorage,
+  type FactCategory,
+  type ProjectFact,
+  type ProjectMemory,
+  type ProjectMemoryStorage,
+} from './memory/project'
 export {
   type ArchitectPromptOptions,
   buildArchitectPrompt,
