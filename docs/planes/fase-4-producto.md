@@ -92,9 +92,9 @@ Duplicar, comparar lado a lado, fusionar decisiones puntuales.
 4. ~~Tool `query_architecture_knowledge`.~~ ✅
 5. Enriquecimiento del catálogo con propiedades de diseño.
 6. Amueblado por estilo y presupuesto.
-7. Funciones objetivo de optimización.
-8. Búsqueda sobre alternativas puntuadas.
-9. Explicación de la propuesta ganadora en lenguaje natural.
+7. ~~Funciones objetivo de optimización.~~ ✅ 6 objetivos en `optimization/`
+8. ~~Búsqueda sobre alternativas puntuadas.~~ ✅ `compare_layouts` sobre snapshots
+9. ~~Explicación de la propuesta ganadora en lenguaje natural.~~ ✅ veredicto razonado
 10. Branching persistente de proyectos.
 11. Actualizar `CLAUDE.md`.
 

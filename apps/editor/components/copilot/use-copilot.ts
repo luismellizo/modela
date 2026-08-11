@@ -8,6 +8,7 @@ import {
   createConversationMemory,
   createDesignCheckTool,
   createHttpProvider,
+  createOptimizationTools,
   createProjectMemory,
   createProjectTools,
   createProposalTool,
@@ -127,6 +128,7 @@ export function useCopilot(): UseCopilot {
       createDesignCheckTool(),
       ...createSnapshotTools(),
       ...createProjectTools(),
+      ...createOptimizationTools(),
     ],
     [],
   )

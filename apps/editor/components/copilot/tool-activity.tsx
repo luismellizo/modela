@@ -41,6 +41,8 @@ const VERBS: Record<string, string> = {
   get_project_brief: 'Recalling the brief',
   forget_project_fact: 'Forgetting that',
   query_architecture_knowledge: 'Checking reference dimensions',
+  score_layout: 'Rating the layout',
+  compare_layouts: 'Comparing the options',
 }
 
 export function ToolActivityList({ activity }: { activity: ToolActivity[] }) {

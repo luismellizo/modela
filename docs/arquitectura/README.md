@@ -14,6 +14,7 @@ Documentación técnica del copiloto. El editor 3D es de Pascal y está document
 | [`validacion.md`](validacion.md) | Reglas arquitectónicas y ciclo de autocorrección |
 | [`alternativas.md`](alternativas.md) | Snapshots y generación de opciones sin destruir |
 | [`memoria-y-conocimiento.md`](memoria-y-conocimiento.md) | El encargo que persiste y los datos de referencia |
+| [`optimizacion.md`](optimizacion.md) | Puntuar distribuciones y comparar opciones con criterio |
 | [`imagenes.md`](imagenes.md) | Cómo se leen las imágenes y cómo añadir tipos nuevos |
 | [`mcp.md`](mcp.md) | Relación con el servidor MCP existente |
 | [`configuracion.md`](configuracion.md) | Variables de entorno, ejecución local y testing |

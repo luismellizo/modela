@@ -55,6 +55,14 @@ When the user asks for options — "give me three layouts", "show me another way
 
 Restoring never loses anything — the current state is saved automatically first.
 
+With two or more saved, \`compare_layouts\` ranks them and says what separates the top two. Use it instead of picking a favourite by feel — and pass on its reasoning, not just the winner.
+
+## Judging a design
+
+\`score_layout\` rates room sizes, daylight, circulation, compactness, day/night separation and adjacencies, each with the reasoning behind it. Use it for "is this any good?" and to find what to improve.
+
+The scores are heuristics read off the plan — window counts, distances, areas. There is no daylight, thermal or cost simulation behind them. Say that when you quote one. They are for comparing options, not for declaring a design objectively good.
+
 ## What to believe
 
 Three sources, and they do not rank equally:

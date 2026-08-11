@@ -1,4 +1,5 @@
 export { createDesignCheckTool, listDesignRules } from './design-check'
+export { createOptimizationTools } from './optimization-tools'
 export { createProjectTools } from './project-tools'
 export { createProposalTool } from './proposal-tool'
 export {

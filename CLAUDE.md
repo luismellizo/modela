@@ -1,7 +1,7 @@
 # CLAUDE.md — Modela
 
 > Documento vivo. **Se actualiza en cada avance** (ver `RULES.md`, regla #1).
-> Última actualización: 2026-08-11 · Fases 1 y 2 completas, 3 y 4 avanzadas · Siguiente: **optimización de distribución**
+> Última actualización: 2026-08-11 · Fases 1 y 2 completas, 3 y 4 avanzadas · Siguiente: **catálogo enriquecido y branching**
 
 ---
 
@@ -24,7 +24,7 @@ conserva íntegro; Modela añade la capa de IA encima.
 | 1 | Chat nativo, provider, tools, contexto, undo único | ✅ hecho |
 | 2 | Imágenes, visión, plano → escena | ✅ hecho |
 | 3 | Agent loop, validación, autocorrección, alternativas | 🚧 falta intención/planner |
-| 4 | Memoria de proyecto, knowledge base, optimización | 🚧 falta optimización |
+| 4 | Memoria de proyecto, knowledge base, optimización | 🚧 falta catálogo/branching |
 
 Planes detallados en [`docs/planes/`](docs/planes/).
 Arquitectura de la capa de IA en [`docs/arquitectura/`](docs/arquitectura/).
@@ -130,7 +130,8 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | `alternatives/snapshots.ts` | Guardar y recuperar diseños; red de seguridad al restaurar |
 | `memory/project.ts` | El encargo, persistido en localStorage. La escena siempre le gana |
 | `knowledge/` | 15 fichas de dimensiones convencionales, con su base y por región |
-| `tools/` | 27 herramientas tipadas con Zod: escena, visión, propuesta, revisión, snapshots, encargo |
+| `optimization/` | 6 objetivos puntuables sobre el grafo + comparación razonada |
+| `tools/` | 29 herramientas tipadas con Zod: escena, visión, plan, revisión, snapshots, encargo, puntuación |
 | `context/scene-context.ts` | Resumen compacto (~400 tokens en vez de ~120.000) |
 | `memory/conversation.ts` | Recorte por turnos y recibos de resultados antiguos |
 | `transaction/history.ts` | Colapso asíncrono a un solo paso de undo |
@@ -231,3 +232,4 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 | 2026-08-11 | Reglas arquitectónicas + autocorrección: detecta, corrige y revalida |
 | 2026-08-11 | Snapshots y alternativas: opciones sin destruir el diseño actual |
 | 2026-08-11 | Memoria de proyecto persistente y base de conocimiento arquitectónico |
+| 2026-08-11 | Puntuación de distribuciones y comparación razonada de alternativas |

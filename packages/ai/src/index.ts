@@ -58,6 +58,7 @@ export {
   type ProjectMemory,
   type ProjectMemoryStorage,
 } from './memory/project'
+export * from './optimization'
 export {
   type ArchitectPromptOptions,
   buildArchitectPrompt,
