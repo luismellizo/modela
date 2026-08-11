@@ -9,6 +9,7 @@ import {
 } from '@modela/ai'
 import { brand } from '@modela/brand'
 import type { NextRequest } from 'next/server'
+import { isModelAllowed } from '@/lib/model-catalog'
 
 /**
  * The copilot's server side.
@@ -33,6 +34,7 @@ export function GET(): Response {
     provider: config.provider,
     model: config.model,
     maxSteps: config.maxSteps,
+    freeOnly: config.freeOnly,
     ...(config.disabledReason ? { reason: config.disabledReason } : {}),
   })
 }
@@ -64,6 +66,20 @@ export async function POST(request: NextRequest): Promise<Response> {
     )
   } catch (error) {
     return fromError(error)
+  }
+
+  // The client may name a model. Validate it here — a picker the client can
+  // bypass is not a spending limit, and `model` is just a field in a POST body.
+  const requestedModel = typeof body.model === 'string' ? body.model : undefined
+  if (requestedModel && config.apiKey) {
+    const allowed = await isModelAllowed(requestedModel, config.apiKey, config.freeOnly)
+    if (!allowed) {
+      return errorResponse(
+        'invalid_request',
+        `Model "${requestedModel}" is not in the allowed list. Free-only mode is ${config.freeOnly ? 'on' : 'off'}.`,
+        403,
+      )
+    }
   }
 
   if (body.action === 'analyze-image') {

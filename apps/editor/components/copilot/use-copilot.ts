@@ -4,6 +4,7 @@ import {
   type Agent,
   type AgentEvent,
   applyProposal,
+  type CatalogModel,
   createAgent,
   createConversationMemory,
   createDesignCheckTool,
@@ -61,6 +62,11 @@ export type UseCopilot = {
   snapshots: SnapshotSummary[]
   currentSnapshotId: string | null
   restoreSnapshot(id: string): void
+  /** Models the server will accept. Free-only unless configured otherwise. */
+  models: CatalogModel[]
+  freeOnly: boolean
+  selectedModel: string | null
+  selectModel(id: string): void
 }
 
 export function useCopilot(): UseCopilot {
@@ -68,6 +74,10 @@ export function useCopilot(): UseCopilot {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [running, setRunning] = useState(false)
   const [canUndo, setCanUndo] = useState(false)
+
+  const [models, setModels] = useState<CatalogModel[]>([])
+  const [freeOnly, setFreeOnly] = useState(true)
+  const [selectedModel, setSelectedModel] = useState<string | null>(null)
 
   const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([])
   const [currentSnapshotId, setCurrentSnapshotId] = useState<string | null>(null)
@@ -118,6 +128,27 @@ export function useCopilot(): UseCopilot {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${ENDPOINT}/models`)
+      .then((response) => response.json())
+      .then((payload: { models?: CatalogModel[]; freeOnly?: boolean; current?: string }) => {
+        if (cancelled) return
+        setModels(payload.models ?? [])
+        setFreeOnly(payload.freeOnly ?? true)
+        // Prefer whatever the server is configured with; fall back to the first
+        // offered model so the picker is never showing a model that is refused.
+        const configured = payload.models?.find((model) => model.id === payload.current)
+        setSelectedModel(configured?.id ?? payload.models?.[0]?.id ?? null)
+      })
+      .catch(() => {
+        // No catalog just means no picker — the server default still works.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // One list, used by the agent and by plan application, so an approved plan
   // runs against exactly the tools that validated it.
   const toolDefinitions = useMemo<ToolDefinition[]>(
@@ -136,7 +167,14 @@ export function useCopilot(): UseCopilot {
   const buildAgent = useCallback((): Agent => {
     return createAgent(
       {
-        provider: createHttpProvider({ endpoint: ENDPOINT, id: 'modela' }),
+        provider: createHttpProvider({
+          endpoint: ENDPOINT,
+          id: 'modela',
+          ...(selectedModel ? { model: selectedModel } : {}),
+          // Attachments are pointless against a text-only model, and silently
+          // dropping them would look like the agent ignoring the user.
+          supportsVision: models.find((model) => model.id === selectedModel)?.vision ?? true,
+        }),
         tools: createToolRegistry({
           tools: toolDefinitions,
           confirmed: new Set(confirmedRef.current),
@@ -151,7 +189,7 @@ export function useCopilot(): UseCopilot {
       },
       { language: typeof navigator === 'undefined' ? 'en' : navigator.language.slice(0, 2) },
     )
-  }, [memory, projectMemory, snapshotStore, toolDefinitions])
+  }, [memory, models, projectMemory, selectedModel, snapshotStore, toolDefinitions])
 
   const patchMessage = useCallback(
     (id: string, update: (message: ChatMessage & { role: 'assistant' }) => void) => {
@@ -483,5 +521,9 @@ export function useCopilot(): UseCopilot {
     snapshots,
     currentSnapshotId,
     restoreSnapshot,
+    models,
+    freeOnly,
+    selectedModel,
+    selectModel: setSelectedModel,
   }
 }

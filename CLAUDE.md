@@ -1,7 +1,8 @@
 # CLAUDE.md — Modela
 
 > Documento vivo. **Se actualiza en cada avance** (ver `RULES.md`, regla #1).
-> Última actualización: 2026-08-11 · Fases 1 y 2 completas, 3 y 4 avanzadas · Siguiente: **catálogo enriquecido y branching**
+> Última actualización: 2026-08-11 · Fases 0–2 completas · 3 y 4 avanzadas
+> Siguiente: **probarlo con un modelo real** (ver «Pendiente» al final)
 
 ---
 
@@ -132,6 +133,7 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | `knowledge/` | 15 fichas de dimensiones convencionales, con su base y por región |
 | `optimization/` | 6 objetivos puntuables sobre el grafo + comparación razonada |
 | `tools/` | 29 herramientas tipadas con Zod: escena, visión, plan, revisión, snapshots, encargo, puntuación |
+| `provider/catalog.ts` | Catálogo de OpenRouter filtrado por gratis + tool calling |
 | `context/scene-context.ts` | Resumen compacto (~400 tokens en vez de ~120.000) |
 | `memory/conversation.ts` | Recorte por turnos y recibos de resultados antiguos |
 | `transaction/history.ts` | Colapso asíncrono a un solo paso de undo |
@@ -149,6 +151,8 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | Tarjeta de plan y confirmación | `components/copilot/proposal-card.tsx` |
 | Resultado de la revisión de diseño | `components/copilot/design-check.tsx` |
 | Alternativas guardadas | `components/copilot/alternatives.tsx` |
+| Selector de modelo | `components/copilot/model-picker.tsx` |
+| Catálogo y validación de modelos | `lib/model-catalog.ts` + `app/api/copilot/models/route.ts` |
 | Captura del viewport | `components/copilot/viewport-capture.ts` |
 
 ### `packages/brand` — la marca
@@ -176,6 +180,8 @@ Detalle en `AGENTS.md` y `wiki/architecture/`.
 ## Comandos
 
 ```bash
+./start.sh               # comprueba entorno, instala y arranca
+./start.sh --check       # solo comprueba el entorno
 bun install              # instalar dependencias
 bun dev                  # editor en http://localhost:3002
 bun test                 # tests de todos los paquetes
@@ -202,6 +208,7 @@ Copiar `.env.example` a `.env.local`. Detalle en
 | `MODELA_AI_VISION_MODEL` | no | modelo aparte para imágenes |
 | `MODELA_AI_MAX_STEPS` | no | tope de iteraciones del agent loop (24) |
 | `MODELA_AI_ENDPOINT` | no | otra pasarela compatible con OpenAI |
+| `MODELA_AI_FREE_ONLY` | no | `1` limita a modelos gratis; lo **valida el servidor** |
 
 Todas se leen en un único sitio: `packages/ai/src/config.ts`.
 Las claves **solo viven en el servidor**; el navegador habla con `/api/copilot`.
@@ -233,3 +240,76 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 | 2026-08-11 | Snapshots y alternativas: opciones sin destruir el diseño actual |
 | 2026-08-11 | Memoria de proyecto persistente y base de conocimiento arquitectónico |
 | 2026-08-11 | Puntuación de distribuciones y comparación razonada de alternativas |
+| 2026-08-11 | Selector de modelos gratis, validación en servidor y `start.sh` |
+
+---
+
+## Pendiente
+
+### 1. Probarlo con un modelo real — bloqueante
+
+**Nada de lo de abajo importa hasta que esto pase.** Hay nueve capas construidas sobre un
+flujo que nunca ha hablado con un modelo de verdad. Los tests usan el proveedor mock: prueban
+que el código hace lo que se le pide, no que el modelo entienda arquitectura.
+
+```bash
+./start.sh          # http://localhost:3002 → pestaña «Copilot»
+```
+
+Guion de aceptación:
+
+| # | Qué pedir | Qué debería pasar |
+|---|---|---|
+| 1 | "Diseña una casa de 180 m² en un lote de 10 × 25 con 3 habitaciones y 2 baños" | Sale un **plan** con aplicar/descartar, no obra hecha |
+| 2 | Aplicar el plan | Los espacios aparecen en el viewport mientras corre |
+| 3 | `Ctrl+Z` **una vez** | Desaparece **todo** el turno |
+| 4 | Seleccionar un muro → "haz esto 20 cm más alto" | Afecta a ese muro y no a otro |
+| 5 | "Mueve la cocina 1.5 m a la derecha" | Se mueve la cocina |
+| 6 | Adjuntar foto de un plano → "recréalo en 3D" | Muros y espacios reconocibles; lo no acotado marcado como estimado |
+| 7 | "¿Qué problemas tiene esta distribución?" | Incidencias reales, con ids que existen |
+| 8 | "Dame otras dos opciones y dime cuál es mejor" | Tres diseños guardados, la actual intacta, veredicto razonado |
+| 9 | Lanzar algo largo y cancelar a mitad | Para y la escena queda coherente |
+| 10 | Recargar la página | El encargo sigue ahí (`localStorage`) |
+
+Los modelos gratis son más flojos que los de pago en tool calling. Si el agente se atasca,
+probar otro desde el selector antes de dar por roto el código.
+
+### 2. Fase 3 — lo que falta
+
+- **Clasificador de intención** (`agent/intent.ts`): enrutar la petición y cargar solo el
+  contexto que esa intención necesita. Hoy el prompt lo decide todo.
+- **Planificador estructurado** (`agent/planner.ts`): petición → plan sin pasar por el modelo
+  dos veces.
+
+Ambos son pulido interno. No añaden capacidad, la abaratan.
+
+### 3. Fase 4 — lo que falta
+
+- **Extracción automática de hechos**: hoy el agente llama `remember_project_fact` porque el
+  prompt se lo pide. Debería salir de la conversación sin pedírselo.
+- **Catálogo enriquecido**: `search_assets` devuelve dimensiones, no holguras ni estilo ni
+  coste relativo. Sin eso, "amueblar en estilo nórdico con presupuesto medio" no se puede
+  hacer honestamente.
+- **Amueblado por estilo y presupuesto**: depende del punto anterior.
+- **Branching persistente**: los snapshots viven en memoria y mueren al recargar. Persistirlos
+  va por el `SceneStore` de `packages/mcp/src/storage/`, no por un segundo almacenamiento.
+
+### 4. Deudas conocidas
+
+- **El umbral de propuesta vive en el prompt**, no en código. `DEFAULT_PROPOSAL_THRESHOLDS`
+  está expuesto pero no se aplica. Si en la práctica el modelo propone poco, endurecerlo.
+- **`facingOf` no tiene brújula**: "norte" es −Z en planta. La orientación real se le pregunta
+  al usuario; no está guardada en el proyecto.
+- **`classifySpace` va por nombre.** Es lo más blando de la capa de puntuación. Una zona
+  llamada "Zona 3" queda fuera de todos los objetivos que dependen del tipo.
+- **`reshape_space` empareja muros por metadata de creación.** Un polígono con distinto número
+  de aristas avisa en vez de adivinar, pero no lo resuelve.
+- **Sin tests de la UI.** `packages/ai` está cubierto; los componentes del copiloto no.
+
+### 5. Seguridad
+
+- `.env.local` está gitignoreado y **nunca** debe commitearse. El repo es público.
+- La clave actual se pegó en un chat: **rotarla** en https://openrouter.ai/keys antes de
+  usar el proyecto en serio.
+- El modo solo-gratis lo valida el servidor (`lib/model-catalog.ts`), no el selector. Un
+  límite que el cliente puede saltarse no es un límite.

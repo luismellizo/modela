@@ -92,11 +92,14 @@ Necesitas [Bun](https://bun.sh) 1.3+ y Node 20+.
 ```bash
 git clone https://github.com/luismellizo/modela.git
 cd modela
-bun install
-
-cp .env.example .env.local     # pon tu clave
-bun dev                        # http://localhost:3002
+./start.sh                     # comprueba el entorno, instala y arranca
 ```
+
+Crea `.env.local` desde el ejemplo en la primera ejecución y te dice qué falta.
+Pon una [clave de OpenRouter](https://openrouter.ai/keys) y vuelve a ejecutarlo.
+
+Con `MODELA_AI_FREE_ONLY=1` el panel solo ofrece modelos gratis con tool calling, y el
+servidor rechaza cualquier otro — el selector es comodidad, el límite lo pone el servidor.
 
 El editor arranca sin clave de API — simplemente no tienes copiloto.
 
@@ -106,7 +109,8 @@ El editor arranca sin clave de API — simplemente no tienes copiloto.
 |---|---|---|---|
 | `OPENROUTER_API_KEY` | para la IA | — | Clave de [openrouter.ai/keys](https://openrouter.ai/keys) |
 | `MODELA_AI_PROVIDER` | no | `openrouter` | `openrouter` o `mock` |
-| `MODELA_AI_MODEL` | no | ver `.env.example` | Cualquier modelo con visión |
+| `MODELA_AI_MODEL` | no | ver `.env.example` | Modelo inicial; el selector del panel lo sobrescribe |
+| `MODELA_AI_FREE_ONLY` | no | apagado | `1` limita a modelos gratis — **lo valida el servidor** |
 | `MODELA_AI_MAX_STEPS` | no | `24` | Tope de iteraciones del agent loop |
 | `PORT` | no | `3002` | Puerto del servidor de desarrollo |
 
@@ -160,7 +164,7 @@ bun run build            # build de producción
 | 1 | Chat nativo, abstracción de proveedor, tools de escena, undo único | ✅ |
 | 2 | Adjuntos de imagen, visión, plano → escena | ✅ |
 | 3 | Agent loop, reglas de validación, autocorrección, alternativas | 🚧 |
-| 4 | Memoria de proyecto, base de conocimiento, optimización de distribución | ⬜ |
+| 4 | Memoria de proyecto, base de conocimiento, optimización de distribución | 🚧 |
 
 Detalle en [`docs/planes/`](docs/planes/).
 

@@ -57,7 +57,16 @@ export function createHttpProvider(config: HttpProviderConfig): AIProvider {
 
     async *generate(request: GenerateRequest): AsyncIterable<ProviderEvent> {
       const { signal, ...rest } = request
-      const response = await post({ action: 'generate', ...rest }, signal)
+      // A model configured on this provider acts as the default; a model named
+      // on the request still wins. Either way the server re-validates it.
+      const response = await post(
+        {
+          action: 'generate',
+          ...rest,
+          ...((rest.model ?? config.model) ? { model: rest.model ?? config.model } : {}),
+        },
+        signal,
+      )
       if (!response.body) throw new ProviderError('network', 'Copilot returned an empty stream')
 
       for await (const payload of readSseData(response.body, signal)) {

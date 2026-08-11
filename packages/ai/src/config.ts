@@ -13,6 +13,11 @@ export type ModelaAiConfig = {
   apiKey?: string
   endpoint?: string
   maxSteps: number
+  /**
+   * Only free models are offered and accepted. The server enforces it, not the
+   * client — a picker the user can bypass is not a spending limit.
+   */
+  freeOnly: boolean
   /** True when a real model can actually be reached. */
   enabled: boolean
   /** Why it is disabled, for the UI to show. */
@@ -36,12 +41,14 @@ export function readAiConfig(env: EnvLike): ModelaAiConfig {
   const apiKey = env.OPENROUTER_API_KEY?.trim()
   const endpoint = env.MODELA_AI_ENDPOINT?.trim()
   const maxSteps = positiveInt(env.MODELA_AI_MAX_STEPS) ?? DEFAULT_MAX_STEPS
+  const freeOnly = env.MODELA_AI_FREE_ONLY === '1' || env.MODELA_AI_FREE_ONLY === 'true'
 
   const base = {
     provider,
     model,
     visionModel,
     maxSteps,
+    freeOnly,
     ...(apiKey ? { apiKey } : {}),
     ...(endpoint ? { endpoint } : {}),
   }

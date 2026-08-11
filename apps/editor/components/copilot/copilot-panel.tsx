@@ -6,6 +6,7 @@ import { useCallback } from 'react'
 import { Alternatives } from './alternatives'
 import { Composer } from './composer'
 import { MessageList } from './message-list'
+import { ModelPicker } from './model-picker'
 import type { Attachment } from './types'
 import { useCopilot } from './use-copilot'
 
@@ -32,11 +33,20 @@ export function CopilotPanel() {
           <span className="text-base leading-none">{brand.mark}</span>
           <div className="min-w-0">
             <p className="truncate font-medium text-sm leading-tight">{brand.copilot.title}</p>
-            {copilot.status.state === 'ready' && (
-              <p className="truncate text-[10px] text-muted-foreground leading-tight">
-                {copilot.status.model}
-              </p>
-            )}
+            {copilot.status.state === 'ready' &&
+              (copilot.models.length > 0 ? (
+                <ModelPicker
+                  disabled={copilot.running}
+                  freeOnly={copilot.freeOnly}
+                  models={copilot.models}
+                  onSelect={copilot.selectModel}
+                  selected={copilot.selectedModel}
+                />
+              ) : (
+                <p className="truncate text-[10px] text-muted-foreground leading-tight">
+                  {copilot.status.model}
+                </p>
+              ))}
           </div>
         </div>
         {copilot.messages.length > 0 && (

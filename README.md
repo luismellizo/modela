@@ -93,11 +93,14 @@ Requires [Bun](https://bun.sh) 1.3+ and Node 20+.
 ```bash
 git clone https://github.com/luismellizo/modela.git
 cd modela
-bun install
-
-cp .env.example .env.local     # add your API key
-bun dev                        # http://localhost:3002
+./start.sh                     # checks the environment, installs, runs
 ```
+
+It creates `.env.local` from the example on first run and tells you what is missing.
+Add an [OpenRouter key](https://openrouter.ai/keys) and run it again.
+
+With `MODELA_AI_FREE_ONLY=1` the panel offers only free models that can call tools, and the
+server refuses anything else — the picker is a convenience, the server is the limit.
 
 The editor runs without an API key — you just don't get the copilot.
 
@@ -107,7 +110,8 @@ The editor runs without an API key — you just don't get the copilot.
 |---|---|---|---|
 | `OPENROUTER_API_KEY` | for AI | — | Key from [openrouter.ai/keys](https://openrouter.ai/keys) |
 | `MODELA_AI_PROVIDER` | no | `openrouter` | `openrouter` or `mock` |
-| `MODELA_AI_MODEL` | no | see `.env.example` | Any vision-capable model slug |
+| `MODELA_AI_MODEL` | no | see `.env.example` | Starting model; the panel picker overrides it |
+| `MODELA_AI_FREE_ONLY` | no | off | `1` restricts to free models — **enforced server-side** |
 | `MODELA_AI_MAX_STEPS` | no | `24` | Cap on agent loop iterations |
 | `PORT` | no | `3002` | Dev server port |
 
@@ -161,7 +165,7 @@ bun run build            # production build
 | 1 | Native chat, provider abstraction, scene tools, single-step undo | ✅ |
 | 2 | Image attachments, vision, floor plan → scene | ✅ |
 | 3 | Agent loop, validation rules, self-correction, alternatives | 🚧 |
-| 4 | Project memory, architectural knowledge base, layout optimization | ⬜ |
+| 4 | Project memory, architectural knowledge base, layout optimization | 🚧 |
 
 Details in [`docs/planes/`](docs/planes/).
 

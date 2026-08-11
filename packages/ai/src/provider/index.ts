@@ -1,3 +1,10 @@
+export {
+  type CatalogModel,
+  type FetchCatalogOptions,
+  fetchModelCatalog,
+  filterModels,
+  type ModelFilter,
+} from './catalog'
 export { createHttpProvider, type HttpProviderConfig } from './http'
 export {
   createMockProvider,
