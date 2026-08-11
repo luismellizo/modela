@@ -15,6 +15,8 @@ import {
 } from '../tools/types'
 import type { SceneTransaction, TemporalHistoryStore } from '../transaction/history'
 import { beginSceneTransaction } from '../transaction/history'
+import { renderIssues, validateDesign } from '../validation/engine'
+import type { ValidationReport, ValidationRule } from '../validation/types'
 import type { AgentEvent, AgentEventHandler } from './events'
 import type { Proposal } from './proposal'
 
@@ -45,6 +47,16 @@ export type AgentOptions = {
   language?: string
   projectNotes?: string
   temperature?: number
+  /**
+   * Run the architectural rules when the model thinks it has finished, and hand
+   * any errors back so it can fix them. On by default: a model that believes it
+   * is done is exactly when a door hanging off a wall goes unnoticed.
+   */
+  autoCorrect?: boolean
+  /** How many times to send errors back before giving up and reporting them. */
+  maxCorrectionRounds?: number
+  /** Override the rule set. Defaults to `DEFAULT_RULES`. */
+  rules?: ValidationRule[]
 }
 
 export type RunInput = {
@@ -66,6 +78,10 @@ export type RunResult = {
   error?: { code: string; message: string }
   /** Set when `status` is `awaiting-approval`. The host applies or discards it. */
   proposal?: Proposal
+  /** The last automatic design check, when one ran. */
+  validation?: ValidationReport
+  /** How many times errors were handed back for correction. */
+  correctionRounds?: number
 }
 
 export type Agent = {
@@ -73,10 +89,13 @@ export type Agent = {
 }
 
 const DEFAULT_MAX_STEPS = 24
+const DEFAULT_CORRECTION_ROUNDS = 2
 
 export function createAgent(deps: AgentDependencies, options: AgentOptions = {}): Agent {
   const maxSteps = options.maxSteps ?? DEFAULT_MAX_STEPS
   const limits = options.limits ?? DEFAULT_TOOL_LIMITS
+  const autoCorrect = options.autoCorrect ?? true
+  const maxCorrectionRounds = options.maxCorrectionRounds ?? DEFAULT_CORRECTION_ROUNDS
 
   return {
     async run(input): Promise<RunResult> {
@@ -89,6 +108,9 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
       let toolCalls = 0
       let finalText = ''
       let pendingProposal: Proposal | null = null
+      let mutated = false
+      let correctionRounds = 0
+      let lastValidation: ValidationReport | null = null
 
       emit({ type: 'turn-start', turnId })
 
@@ -153,6 +175,8 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
           status,
           ...(error ? { error } : {}),
           ...(pendingProposal ? { proposal: pendingProposal } : {}),
+          ...(lastValidation ? { validation: lastValidation } : {}),
+          ...(correctionRounds > 0 ? { correctionRounds } : {}),
         }
       }
 
@@ -200,7 +224,41 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
           if (stepText) finalText = stepText
 
           if (pendingCalls.length === 0) {
-            return finish('completed')
+            // The model thinks it is done. That is precisely the moment a door
+            // hanging off a wall goes unnoticed, so check before agreeing.
+            if (!(autoCorrect && mutated) || correctionRounds >= maxCorrectionRounds) {
+              if (autoCorrect && mutated) {
+                lastValidation = validateDesign(deps.scene, options.rules)
+                emit({
+                  type: 'validation',
+                  report: lastValidation,
+                  round: correctionRounds,
+                  correcting: false,
+                })
+              }
+              return finish('completed')
+            }
+
+            const report = validateDesign(deps.scene, options.rules)
+            lastValidation = report
+            const correcting = report.errors > 0
+
+            emit({ type: 'validation', report, round: correctionRounds, correcting })
+
+            if (!correcting) {
+              return finish('completed')
+            }
+
+            correctionRounds += 1
+            // Handed back as a user turn because that is the only role every
+            // provider accepts mid-conversation. The prefix keeps it honest —
+            // the model can see this did not come from the person typing.
+            deps.memory.append(
+              userMessage(
+                `[automatic design check] ${report.errors} error(s) found in what you just built:\n${renderIssues(report)}\n\nFix them with the scene tools, then say what you changed. Do not repeat the whole build.`,
+              ),
+            )
+            continue
           }
 
           for (const call of pendingCalls) {
@@ -244,6 +302,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
                 durationMs,
               })
               if (definition?.kind === 'write') {
+                mutated = true
                 emit({ type: 'scene-changed', tool: call.name })
               }
               deps.memory.append({

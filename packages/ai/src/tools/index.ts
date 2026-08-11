@@ -1,3 +1,4 @@
+export { createDesignCheckTool, listDesignRules } from './design-check'
 export { createProposalTool } from './proposal-tool'
 export {
   type CreateToolRegistryOptions,

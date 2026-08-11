@@ -116,8 +116,8 @@ un solo paso de undo.
 2. Planificador: petición → plan estructurado.
 3. ~~Sistema de propuestas con umbral configurable.~~ ✅ `propose_plan` + `applyProposal`
 4. ~~Tarjeta de plan en la UI con aplicar/cancelar.~~ ✅ `proposal-card.tsx`
-5. Motor de reglas de validación + primeras seis reglas.
-6. Bucle de autocorrección con tope de intentos.
+5. ~~Motor de reglas de validación + primeras seis reglas.~~ ✅ 7 reglas en `validation/`
+6. ~~Bucle de autocorrección con tope de intentos.~~ ✅ 2 rondas por defecto
 7. Snapshots de escena.
 8. Generación de alternativas sobre `generate_variants`.
 9. UI de comparación de alternativas.

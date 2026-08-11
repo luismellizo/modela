@@ -1,5 +1,6 @@
 import type { TokenUsage } from '../provider/types'
 import type { ToolErrorCode } from '../tools/types'
+import type { ValidationReport } from '../validation/types'
 import type { Proposal } from './proposal'
 
 /**
@@ -35,6 +36,8 @@ export type AgentEvent =
   | { type: 'scene-changed'; tool: string }
   /** The agent stopped to ask. The UI renders the plan and collects a verdict. */
   | { type: 'proposal'; proposal: Proposal }
+  /** An automatic design check ran. `round` is 0 for the first one. */
+  | { type: 'validation'; report: ValidationReport; round: number; correcting: boolean }
   /** A tool was refused for want of approval. The UI can offer the button. */
   | { type: 'needs-confirmation'; callId: string; tool: string; arguments: unknown }
   | {

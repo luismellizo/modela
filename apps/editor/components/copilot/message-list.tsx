@@ -5,6 +5,7 @@ import { brand } from '@modela/brand'
 import { AlertCircle, Ban, Undo2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { DesignCheck } from './design-check'
 import { ConfirmToolCard, ProposalCard } from './proposal-card'
 import { ToolActivityList } from './tool-activity'
 import type { Attachment, ChatMessage } from './types'
@@ -143,6 +144,10 @@ function AssistantBlock({
       )}
 
       <ToolActivityList activity={message.activity} />
+
+      {message.validation && (
+        <DesignCheck correcting={message.correcting ?? false} report={message.validation} />
+      )}
 
       {message.text && (
         <div

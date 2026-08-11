@@ -1,4 +1,4 @@
-import type { Proposal, ToolErrorCode } from '@modela/ai'
+import type { Proposal, ToolErrorCode, ValidationReport } from '@modela/ai'
 
 /** What the panel renders. Derived entirely from the agent's event stream. */
 
@@ -45,6 +45,10 @@ export type ChatMessage =
       proposalOutcome?: 'applied' | 'partial' | 'discarded'
       /** Destructive tools the agent asked to run and the user has not approved. */
       pendingConfirmations?: { callId: string; tool: string; arguments: unknown }[]
+      /** Result of the automatic design check, when one ran. */
+      validation?: ValidationReport
+      /** True while the agent is fixing what the check found. */
+      correcting?: boolean
       at: number
     }
 

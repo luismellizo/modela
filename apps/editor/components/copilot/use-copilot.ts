@@ -6,6 +6,7 @@ import {
   applyProposal,
   createAgent,
   createConversationMemory,
+  createDesignCheckTool,
   createHttpProvider,
   createProposalTool,
   createSceneTools,
@@ -87,7 +88,12 @@ export function useCopilot(): UseCopilot {
   // One list, used by the agent and by plan application, so an approved plan
   // runs against exactly the tools that validated it.
   const toolDefinitions = useMemo<ToolDefinition[]>(
-    () => [...createSceneTools(), ...createVisionTools(), createProposalTool()],
+    () => [
+      ...createSceneTools(),
+      ...createVisionTools(),
+      createProposalTool(),
+      createDesignCheckTool(),
+    ],
     [],
   )
 
@@ -200,12 +206,19 @@ export function useCopilot(): UseCopilot {
               message.proposal = event.proposal
             })
             break
+          case 'validation':
+            patch((message) => {
+              message.validation = event.report
+              message.correcting = event.correcting
+            })
+            break
           case 'turn-end':
             patch((message) => {
               message.streaming = false
               message.text = event.text || message.text
               message.undoSteps = event.undoSteps
               message.status = event.awaitingProposal ? 'awaiting-approval' : 'completed'
+              message.correcting = false
             })
             if (event.undoSteps > 0) setCanUndo(true)
             break

@@ -23,7 +23,7 @@ conserva íntegro; Modela añade la capa de IA encima.
 | 0 | Fork, docs, reglas, branding | ✅ hecho |
 | 1 | Chat nativo, provider, tools, contexto, undo único | ✅ hecho |
 | 2 | Imágenes, visión, plano → escena | ✅ hecho |
-| 3 | Agent loop, validación, autocorrección, alternativas | 🚧 propuestas hechas |
+| 3 | Agent loop, validación, autocorrección, alternativas | 🚧 falta alternativas |
 | 4 | Memoria de proyecto, knowledge base, optimización | ⬜ pendiente |
 
 Planes detallados en [`docs/planes/`](docs/planes/).
@@ -126,6 +126,7 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | `agent/events.ts` | Único contrato entre agente y UI |
 | `agent/proposal.ts` | Tipos y validación de un plan antes de enseñarlo |
 | `agent/apply-proposal.ts` | Ejecuta un plan aprobado sin volver a llamar al modelo |
+| `validation/` | 7 reglas arquitectónicas computables sobre el grafo + motor extensible |
 | `tools/` | ~17 herramientas tipadas con Zod sobre `SceneOperations` + 2 de visión |
 | `context/scene-context.ts` | Resumen compacto (~400 tokens en vez de ~120.000) |
 | `memory/conversation.ts` | Recorte por turnos y recibos de resultados antiguos |
@@ -222,3 +223,4 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 | 2026-08-11 | Fase 2: visión estructurada, `analyze_image`, `review_viewport`, captura del viewport |
 | 2026-08-11 | Documentación de arquitectura en `docs/arquitectura/` |
 | 2026-08-11 | Propuestas revisables y confirmación de operaciones destructivas |
+| 2026-08-11 | Reglas arquitectónicas + autocorrección: detecta, corrige y revalida |
