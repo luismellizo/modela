@@ -3,12 +3,16 @@
 import {
   type Agent,
   type AgentEvent,
+  applyProposal,
   createAgent,
   createConversationMemory,
   createHttpProvider,
+  createProposalTool,
   createSceneTools,
   createToolRegistry,
   createVisionTools,
+  type Proposal,
+  type ToolDefinition,
 } from '@modela/ai'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getHistoryStore, getSceneOperations, readSelection } from './scene-operations'
@@ -34,8 +38,17 @@ export type UseCopilot = {
   cancel(): void
   undoLastOperation(): void
   clear(): void
-  /** Tool names the user has approved for the next turn. */
-  confirmTool(name: string): void
+  /** Run an approved plan. No model call — the reviewed steps run as reviewed. */
+  applyPlan(messageId: string, proposal: Proposal): Promise<void>
+  /** Throw a plan away without touching the scene. */
+  discardPlan(messageId: string): void
+  /**
+   * Approve a destructive tool the agent asked for, and let it try again. The
+   * approval lasts one turn.
+   */
+  approveTool(messageId: string, callId: string, tool: string): Promise<void>
+  /** Refuse a destructive tool. The scene is untouched. */
+  dismissTool(messageId: string, callId: string): void
 }
 
 export function useCopilot(): UseCopilot {
@@ -71,12 +84,19 @@ export function useCopilot(): UseCopilot {
     }
   }, [])
 
+  // One list, used by the agent and by plan application, so an approved plan
+  // runs against exactly the tools that validated it.
+  const toolDefinitions = useMemo<ToolDefinition[]>(
+    () => [...createSceneTools(), ...createVisionTools(), createProposalTool()],
+    [],
+  )
+
   const buildAgent = useCallback((): Agent => {
     return createAgent(
       {
         provider: createHttpProvider({ endpoint: ENDPOINT, id: 'modela' }),
         tools: createToolRegistry({
-          tools: [...createSceneTools(), ...createVisionTools()],
+          tools: toolDefinitions,
           confirmed: new Set(confirmedRef.current),
         }),
         scene: getSceneOperations(),
@@ -87,7 +107,21 @@ export function useCopilot(): UseCopilot {
       },
       { language: typeof navigator === 'undefined' ? 'en' : navigator.language.slice(0, 2) },
     )
-  }, [memory])
+  }, [memory, toolDefinitions])
+
+  const patchMessage = useCallback(
+    (id: string, update: (message: ChatMessage & { role: 'assistant' }) => void) => {
+      setMessages((current) =>
+        current.map((message) => {
+          if (message.id !== id || message.role !== 'assistant') return message
+          const next = { ...message, activity: [...message.activity] }
+          update(next)
+          return next
+        }),
+      )
+    },
+    [],
+  )
 
   const send = useCallback(
     async (text: string, attachments: Attachment[]) => {
@@ -113,16 +147,8 @@ export function useCopilot(): UseCopilot {
         },
       ])
 
-      const patch = (update: (message: ChatMessage & { role: 'assistant' }) => void) => {
-        setMessages((current) =>
-          current.map((message) => {
-            if (message.id !== assistantId || message.role !== 'assistant') return message
-            const next = { ...message, activity: [...message.activity] }
-            update(next)
-            return next
-          }),
-        )
-      }
+      const patch = (update: (message: ChatMessage & { role: 'assistant' }) => void) =>
+        patchMessage(assistantId, update)
 
       const onEvent = (event: AgentEvent) => {
         switch (event.type) {
@@ -161,12 +187,25 @@ export function useCopilot(): UseCopilot {
               }
             })
             break
+          case 'needs-confirmation':
+            patch((message) => {
+              message.pendingConfirmations = [
+                ...(message.pendingConfirmations ?? []),
+                { callId: event.callId, tool: event.tool, arguments: event.arguments },
+              ]
+            })
+            break
+          case 'proposal':
+            patch((message) => {
+              message.proposal = event.proposal
+            })
+            break
           case 'turn-end':
             patch((message) => {
               message.streaming = false
               message.text = event.text || message.text
               message.undoSteps = event.undoSteps
-              message.status = 'completed'
+              message.status = event.awaitingProposal ? 'awaiting-approval' : 'completed'
             })
             if (event.undoSteps > 0) setCanUndo(true)
             break
@@ -211,7 +250,7 @@ export function useCopilot(): UseCopilot {
         setRunning(false)
       }
     },
-    [buildAgent, running],
+    [buildAgent, patchMessage, running],
   )
 
   const cancel = useCallback(() => {
@@ -230,9 +269,144 @@ export function useCopilot(): UseCopilot {
     setCanUndo(false)
   }, [memory])
 
-  const confirmTool = useCallback((name: string) => {
-    confirmedRef.current.add(name)
-  }, [])
+  const applyPlan = useCallback(
+    async (messageId: string, proposal: Proposal) => {
+      if (running) return
 
-  return { status, messages, running, canUndo, send, cancel, undoLastOperation, clear, confirmTool }
+      const controller = new AbortController()
+      abortRef.current = controller
+      setRunning(true)
+
+      // The card is replaced by live activity, so the user watches the same
+      // steps they just read actually run.
+      patchMessage(messageId, (message) => {
+        message.proposal = undefined
+        message.proposalOutcome = 'applied'
+        message.status = 'completed'
+      })
+
+      try {
+        const result = await applyProposal({
+          proposal,
+          tools: toolDefinitions,
+          scene: getSceneOperations(),
+          getSelection: readSelection,
+          historyStore: getHistoryStore(),
+          signal: controller.signal,
+          onEvent: (event) => {
+            patchMessage(messageId, (message) => {
+              if (event.type === 'tool-start') {
+                message.activity.push({
+                  callId: event.callId,
+                  tool: event.tool,
+                  arguments: event.arguments,
+                  status: 'running',
+                })
+              } else if (event.type === 'tool-end') {
+                const activity = message.activity.find(
+                  (entry): entry is ToolActivity => entry.callId === event.callId,
+                )
+                if (!activity) return
+                activity.durationMs = event.durationMs
+                if (event.ok) {
+                  activity.status = 'ok'
+                  activity.result = event.result
+                } else {
+                  activity.status = 'failed'
+                  activity.error = { code: event.code, message: event.message }
+                }
+              }
+            })
+          },
+        })
+
+        patchMessage(messageId, (message) => {
+          message.undoSteps = result.undoSteps
+          message.proposalOutcome = result.failed.length > 0 ? 'partial' : 'applied'
+          if (result.failed.length > 0) {
+            message.text = `${message.text}\n\nApplied ${result.applied} of ${proposal.calls.length} steps. ${result.failed.length} failed — see the activity above.`
+          }
+        })
+
+        // The model has to know what actually happened, or its next answer will
+        // describe a scene that does not exist.
+        memory.append({
+          role: 'assistant',
+          content: `The user approved the plan "${proposal.title}". Applied ${result.applied} of ${proposal.calls.length} steps${
+            result.failed.length > 0
+              ? `; these failed: ${result.failed
+                  .map((failure) => `${failure.tool} (${failure.message})`)
+                  .join(', ')}`
+              : ''
+          }.`,
+        })
+
+        if (result.undoSteps > 0) setCanUndo(true)
+      } finally {
+        abortRef.current = null
+        setRunning(false)
+      }
+    },
+    [memory, patchMessage, running, toolDefinitions],
+  )
+
+  const discardPlan = useCallback(
+    (messageId: string) => {
+      patchMessage(messageId, (message) => {
+        message.proposal = undefined
+        message.proposalOutcome = 'discarded'
+        message.status = 'completed'
+      })
+      memory.append({
+        role: 'assistant',
+        content: 'The user discarded the plan. Nothing was built. Ask what to change.',
+      })
+    },
+    [memory, patchMessage],
+  )
+
+  const approveTool = useCallback(
+    async (messageId: string, callId: string, tool: string) => {
+      // Lasts one turn only — approving one delete must not authorise every
+      // delete for the rest of the session.
+      confirmedRef.current.add(tool)
+      patchMessage(messageId, (message) => {
+        message.pendingConfirmations = (message.pendingConfirmations ?? []).filter(
+          (entry) => entry.callId !== callId,
+        )
+      })
+      await send(`Approved: go ahead with ${tool}.`, [])
+    },
+    [patchMessage, send],
+  )
+
+  const dismissTool = useCallback(
+    (messageId: string, callId: string) => {
+      patchMessage(messageId, (message) => {
+        message.pendingConfirmations = (message.pendingConfirmations ?? []).filter(
+          (entry) => entry.callId !== callId,
+        )
+      })
+      memory.append({
+        role: 'assistant',
+        content: 'The user refused that operation. Do not retry it; propose something else.',
+      })
+    },
+    [memory, patchMessage],
+  )
+
+  return {
+    status,
+    messages,
+    running,
+    canUndo,
+    send,
+    cancel,
+    undoLastOperation,
+    clear,
+    applyPlan,
+    discardPlan,
+    approveTool,
+    dismissTool,
+  }
 }

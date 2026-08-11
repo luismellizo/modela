@@ -1,3 +1,4 @@
+export { createProposalTool } from './proposal-tool'
 export {
   type CreateToolRegistryOptions,
   createToolRegistry,
@@ -14,6 +15,7 @@ export {
 export {
   DEFAULT_TOOL_LIMITS,
   defineTool,
+  type ProposalContext,
   type SelectionSnapshot,
   type ToolContext,
   type ToolDefinition,

@@ -23,7 +23,7 @@ conserva íntegro; Modela añade la capa de IA encima.
 | 0 | Fork, docs, reglas, branding | ✅ hecho |
 | 1 | Chat nativo, provider, tools, contexto, undo único | ✅ hecho |
 | 2 | Imágenes, visión, plano → escena | ✅ hecho |
-| 3 | Agent loop, validación, autocorrección, alternativas | ⬜ pendiente |
+| 3 | Agent loop, validación, autocorrección, alternativas | 🚧 propuestas hechas |
 | 4 | Memoria de proyecto, knowledge base, optimización | ⬜ pendiente |
 
 Planes detallados en [`docs/planes/`](docs/planes/).
@@ -124,6 +124,8 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | `provider/` | `AIProvider` + adaptadores `openrouter`, `mock` y `http` (cliente sin credenciales) |
 | `agent/agent.ts` | Bucle plan→ejecutar→observar, cancelable, con tope de pasos |
 | `agent/events.ts` | Único contrato entre agente y UI |
+| `agent/proposal.ts` | Tipos y validación de un plan antes de enseñarlo |
+| `agent/apply-proposal.ts` | Ejecuta un plan aprobado sin volver a llamar al modelo |
 | `tools/` | ~17 herramientas tipadas con Zod sobre `SceneOperations` + 2 de visión |
 | `context/scene-context.ts` | Resumen compacto (~400 tokens en vez de ~120.000) |
 | `memory/conversation.ts` | Recorte por turnos y recibos de resultados antiguos |
@@ -139,6 +141,7 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | Panel | `components/copilot/copilot-panel.tsx` |
 | Estado | `components/copilot/use-copilot.ts` |
 | Puente a la escena viva | `components/copilot/scene-operations.ts` |
+| Tarjeta de plan y confirmación | `components/copilot/proposal-card.tsx` |
 | Captura del viewport | `components/copilot/viewport-capture.ts` |
 
 ### `packages/brand` — la marca
@@ -218,3 +221,4 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 | 2026-08-11 | Copiloto montado como pestaña del editor + `packages/brand` |
 | 2026-08-11 | Fase 2: visión estructurada, `analyze_image`, `review_viewport`, captura del viewport |
 | 2026-08-11 | Documentación de arquitectura en `docs/arquitectura/` |
+| 2026-08-11 | Propuestas revisables y confirmación de operaciones destructivas |

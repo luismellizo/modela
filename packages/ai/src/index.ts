@@ -6,7 +6,20 @@ export {
   type RunInput,
   type RunResult,
 } from './agent/agent'
+export {
+  type ApplyProposalDependencies,
+  type ApplyProposalResult,
+  applyProposal,
+} from './agent/apply-proposal'
 export type { AgentEvent, AgentEventHandler } from './agent/events'
+export {
+  DEFAULT_PROPOSAL_THRESHOLDS,
+  type Proposal,
+  type ProposalThresholds,
+  type ProposalValidation,
+  type ProposedCall,
+  validateProposal,
+} from './agent/proposal'
 export {
   type EnvLike,
   type ModelaAiConfig,

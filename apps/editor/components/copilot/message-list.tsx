@@ -1,9 +1,11 @@
 'use client'
 
+import type { Proposal } from '@modela/ai'
 import { brand } from '@modela/brand'
-import { AlertCircle, Undo2 } from 'lucide-react'
+import { AlertCircle, Ban, Undo2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { ConfirmToolCard, ProposalCard } from './proposal-card'
 import { ToolActivityList } from './tool-activity'
 import type { Attachment, ChatMessage } from './types'
 
@@ -13,6 +15,10 @@ export type MessageListProps = {
   canUndo: boolean
   onUndo(): void
   onSuggestion(text: string): void
+  onApplyPlan(messageId: string, proposal: Proposal): void
+  onDiscardPlan(messageId: string): void
+  onApproveTool(messageId: string, callId: string, tool: string): void
+  onDismissTool(messageId: string, callId: string): void
   disabled: boolean
 }
 
@@ -22,6 +28,10 @@ export function MessageList({
   canUndo,
   onUndo,
   onSuggestion,
+  onApplyPlan,
+  onDiscardPlan,
+  onApproveTool,
+  onDismissTool,
   disabled,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -64,6 +74,10 @@ export function MessageList({
             canUndo={canUndo}
             key={message.id}
             message={message}
+            onApplyPlan={onApplyPlan}
+            onApproveTool={onApproveTool}
+            onDiscardPlan={onDiscardPlan}
+            onDismissTool={onDismissTool}
             onUndo={onUndo}
             running={running}
           />
@@ -106,11 +120,19 @@ function AssistantBlock({
   running,
   canUndo,
   onUndo,
+  onApplyPlan,
+  onDiscardPlan,
+  onApproveTool,
+  onDismissTool,
 }: {
   message: ChatMessage & { role: 'assistant' }
   running: boolean
   canUndo: boolean
   onUndo(): void
+  onApplyPlan(messageId: string, proposal: Proposal): void
+  onDiscardPlan(messageId: string): void
+  onApproveTool(messageId: string, callId: string, tool: string): void
+  onDismissTool(messageId: string, callId: string): void
 }) {
   const showThinking = message.streaming && message.text === '' && message.activity.length === 0
 
@@ -148,6 +170,35 @@ function AssistantBlock({
           Stopped at the step limit. Ask me to continue if that was too early.
         </p>
       )}
+
+      {message.proposal && (
+        <ProposalCard
+          disabled={running}
+          onApply={() => {
+            if (message.proposal) onApplyPlan(message.id, message.proposal)
+          }}
+          onDiscard={() => onDiscardPlan(message.id)}
+          proposal={message.proposal}
+        />
+      )}
+
+      {message.proposalOutcome === 'discarded' && (
+        <p className="flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
+          <Ban className="h-3 w-3" />
+          Plan discarded. Nothing was built.
+        </p>
+      )}
+
+      {(message.pendingConfirmations ?? []).map((pending) => (
+        <ConfirmToolCard
+          arguments={pending.arguments}
+          disabled={running}
+          key={pending.callId}
+          onApprove={() => onApproveTool(message.id, pending.callId, pending.tool)}
+          onDismiss={() => onDismissTool(message.id, pending.callId)}
+          tool={pending.tool}
+        />
+      ))}
 
       {!(running || message.streaming) && (message.undoSteps ?? 0) > 0 && canUndo && (
         <button

@@ -114,8 +114,8 @@ un solo paso de undo.
 
 1. Clasificador de intención y carga de contexto por intención.
 2. Planificador: petición → plan estructurado.
-3. Sistema de propuestas con umbral configurable.
-4. Tarjeta de plan en la UI con aplicar/cancelar.
+3. ~~Sistema de propuestas con umbral configurable.~~ ✅ `propose_plan` + `applyProposal`
+4. ~~Tarjeta de plan en la UI con aplicar/cancelar.~~ ✅ `proposal-card.tsx`
 5. Motor de reglas de validación + primeras seis reglas.
 6. Bucle de autocorrección con tope de intentos.
 7. Snapshots de escena.

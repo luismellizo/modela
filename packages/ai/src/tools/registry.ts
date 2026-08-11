@@ -18,6 +18,12 @@ export type ToolRegistry = {
    * as `{ ok: false }` so the agent can show them to the model and let it retry.
    */
   execute(name: string, rawArguments: string, context: ToolContext): Promise<ToolOutcome>
+  /**
+   * Schema-check a call without running it. Proposals use this so a plan shown
+   * to the user is one that can actually be applied — nothing is worse than an
+   * "Apply changes" button that fails halfway through.
+   */
+  validate(name: string, args: unknown): { ok: true } | { ok: false; message: string }
 }
 
 export type CreateToolRegistryOptions = {
@@ -44,6 +50,19 @@ export function createToolRegistry(options: CreateToolRegistryOptions): ToolRegi
     get: (name) => byName.get(name),
     has: (name) => byName.has(name),
     names: () => [...byName.keys()],
+
+    validate(name, args) {
+      const tool = byName.get(name)
+      if (!tool) return { ok: false, message: `No tool named "${name}"` }
+      const parsed = tool.input.safeParse(args)
+      if (parsed.success) return { ok: true }
+      return {
+        ok: false,
+        message: parsed.error.issues
+          .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
+          .join('; '),
+      }
+    },
 
     async execute(name, rawArguments, context): Promise<ToolOutcome> {
       const tool = byName.get(name)

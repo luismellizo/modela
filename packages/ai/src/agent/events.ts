@@ -1,5 +1,6 @@
 import type { TokenUsage } from '../provider/types'
 import type { ToolErrorCode } from '../tools/types'
+import type { Proposal } from './proposal'
 
 /**
  * What the UI sees. The panel renders from this stream alone — it never reads
@@ -32,6 +33,10 @@ export type AgentEvent =
     }
   /** Scene changed — the UI can nudge the viewport or flash what moved. */
   | { type: 'scene-changed'; tool: string }
+  /** The agent stopped to ask. The UI renders the plan and collects a verdict. */
+  | { type: 'proposal'; proposal: Proposal }
+  /** A tool was refused for want of approval. The UI can offer the button. */
+  | { type: 'needs-confirmation'; callId: string; tool: string; arguments: unknown }
   | {
       type: 'turn-end'
       turnId: string
@@ -41,6 +46,8 @@ export type AgentEvent =
       /** History entries collapsed into one undo step. */
       undoSteps: number
       usage?: TokenUsage
+      /** Set when the turn ended because the agent is waiting on approval. */
+      awaitingProposal?: Proposal
     }
   | { type: 'cancelled'; turnId: string; undoSteps: number }
   | { type: 'error'; turnId: string; code: string; message: string }

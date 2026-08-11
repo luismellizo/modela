@@ -1,4 +1,4 @@
-import type { ToolErrorCode } from '@modela/ai'
+import type { Proposal, ToolErrorCode } from '@modela/ai'
 
 /** What the panel renders. Derived entirely from the agent's event stream. */
 
@@ -37,8 +37,14 @@ export type ChatMessage =
       streaming: boolean
       /** History entries this turn collapsed into one undo step. */
       undoSteps?: number
-      status?: 'completed' | 'cancelled' | 'max-steps' | 'error'
+      status?: 'completed' | 'cancelled' | 'max-steps' | 'error' | 'awaiting-approval'
       error?: { code: string; message: string }
+      /** A plan waiting on the user. Rendered as a card with apply/discard. */
+      proposal?: Proposal
+      /** Verdict once the user has decided. */
+      proposalOutcome?: 'applied' | 'partial' | 'discarded'
+      /** Destructive tools the agent asked to run and the user has not approved. */
+      pendingConfirmations?: { callId: string; tool: string; arguments: unknown }[]
       at: number
     }
 

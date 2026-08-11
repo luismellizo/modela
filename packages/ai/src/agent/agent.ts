@@ -7,10 +7,16 @@ import type { AIProvider, Message, TokenUsage, ToolCall } from '../provider/type
 import { ProviderError } from '../provider/types'
 import type { ToolRegistry } from '../tools/registry'
 import type { VisionContext } from '../tools/types'
-import { DEFAULT_TOOL_LIMITS, type SelectionSnapshot, type ToolLimits } from '../tools/types'
+import {
+  DEFAULT_TOOL_LIMITS,
+  type ProposalContext,
+  type SelectionSnapshot,
+  type ToolLimits,
+} from '../tools/types'
 import type { SceneTransaction, TemporalHistoryStore } from '../transaction/history'
 import { beginSceneTransaction } from '../transaction/history'
 import type { AgentEvent, AgentEventHandler } from './events'
+import type { Proposal } from './proposal'
 
 export type AgentDependencies = {
   provider: AIProvider
@@ -56,8 +62,10 @@ export type RunResult = {
   toolCalls: number
   undoSteps: number
   usage: TokenUsage
-  status: 'completed' | 'cancelled' | 'max-steps' | 'error'
+  status: 'completed' | 'cancelled' | 'max-steps' | 'error' | 'awaiting-approval'
   error?: { code: string; message: string }
+  /** Set when `status` is `awaiting-approval`. The host applies or discards it. */
+  proposal?: Proposal
 }
 
 export type Agent = {
@@ -80,6 +88,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
       let steps = 0
       let toolCalls = 0
       let finalText = ''
+      let pendingProposal: Proposal | null = null
 
       emit({ type: 'turn-start', turnId })
 
@@ -106,6 +115,16 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
         ...(deps.captureViewport ? { captureViewport: deps.captureViewport } : {}),
       }
 
+      // Proposals validate against the very registry that will run them, so an
+      // approved plan cannot fail on a schema the user never saw.
+      const proposals: ProposalContext = {
+        validate: (name, args) => deps.tools.validate(name, args),
+        submit: (proposal) => {
+          pendingProposal = proposal
+          emit({ type: 'proposal', proposal })
+        },
+      }
+
       const finish = (status: RunResult['status'], error?: RunResult['error']): RunResult => {
         const undoSteps = transaction?.commit().collapsedFrom ?? 0
         if (status === 'cancelled') {
@@ -121,6 +140,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
             toolCalls,
             undoSteps,
             usage,
+            ...(pendingProposal ? { awaitingProposal: pendingProposal } : {}),
           })
         }
         return {
@@ -132,6 +152,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
           usage,
           status,
           ...(error ? { error } : {}),
+          ...(pendingProposal ? { proposal: pendingProposal } : {}),
         }
       }
 
@@ -207,6 +228,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
               selection: deps.getSelection(),
               limits,
               vision,
+              proposals,
               ...(input.signal ? { signal: input.signal } : {}),
             })
 
@@ -241,6 +263,14 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
                 ...(outcome.hint ? { hint: outcome.hint } : {}),
                 durationMs,
               })
+              if (outcome.code === 'needs_confirmation') {
+                emit({
+                  type: 'needs-confirmation',
+                  callId: call.id,
+                  tool: call.name,
+                  arguments: safeParse(call.arguments),
+                })
+              }
               // Errors go back to the model rather than aborting the turn —
               // recovering from a bad argument is its job, and it is good at it.
               deps.memory.append({
@@ -254,6 +284,15 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
                 }),
               })
             }
+          }
+
+          // A submitted proposal is a full stop. The prompt asks the model to
+          // wait, but a prompt is not a control — the loop enforces it, so a
+          // model that keeps going cannot build what the user has not approved.
+          if (pendingProposal) {
+            finalText =
+              finalText || 'I have put a plan together. Review it and apply it when you are happy.'
+            return finish('awaiting-approval')
           }
         }
 

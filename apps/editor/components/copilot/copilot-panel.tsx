@@ -62,6 +62,14 @@ export function CopilotPanel() {
         canUndo={copilot.canUndo}
         disabled={disabled}
         messages={copilot.messages}
+        onApplyPlan={(messageId, proposal) => {
+          void copilot.applyPlan(messageId, proposal)
+        }}
+        onApproveTool={(messageId, callId, tool) => {
+          void copilot.approveTool(messageId, callId, tool)
+        }}
+        onDiscardPlan={copilot.discardPlan}
+        onDismissTool={copilot.dismissTool}
         onSuggestion={(text) => send(text, [])}
         onUndo={copilot.undoLastOperation}
         running={copilot.running}

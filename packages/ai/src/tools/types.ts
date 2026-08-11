@@ -1,5 +1,6 @@
 import type { SceneOperations } from '@pascal-app/mcp/operations'
 import { z } from 'zod'
+import type { Proposal } from '../agent/proposal'
 import type { AIProvider, ToolSpec } from '../provider/types'
 
 /** What a tool can reach. Nothing else — no React, no store, no DOM. */
@@ -14,6 +15,17 @@ export type ToolContext = {
   limits: ToolLimits
   /** Present only when the host can supply images. Vision tools need it. */
   vision?: VisionContext
+  /** Present only when the host can show a plan and collect approval. */
+  proposals?: ProposalContext
+}
+
+/**
+ * Wired by the agent. `validate` comes from the tool registry, so a proposal is
+ * checked against the very schemas that will run it.
+ */
+export type ProposalContext = {
+  validate(name: string, args: unknown): { ok: true } | { ok: false; message: string }
+  submit(proposal: Proposal): void
 }
 
 /**

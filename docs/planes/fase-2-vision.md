@@ -92,7 +92,9 @@ materialización en el Scene Graph
 5. Analizador de planos → estructura con `observed`/`inferred`/`unknown`.
 6. Materializador estructura → patches, reutilizando los tools de escena de la fase 1.
 7. Adjuntos en el composer: arrastrar, pegar del portapapeles, miniatura, quitar.
-8. Propuesta previa a aplicar, con lo inferido y lo desconocido bien visible.
+8. ~~Propuesta previa a aplicar, con lo inferido y lo desconocido bien visible.~~ ✅
+   Implementado como `propose_plan` + `applyProposal`. Ver
+   [`docs/arquitectura/propuestas.md`](../arquitectura/propuestas.md).
 9. Captura del viewport como contexto visual ("¿qué mejorarías de esta distribución?").
 10. Tests: validación, extracción, materialización, degradación con imagen ilegible.
 11. Actualizar `CLAUDE.md`.
