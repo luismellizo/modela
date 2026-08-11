@@ -1,482 +1,183 @@
-# Pascal Editor
+<div align="center">
 
-A 3D building editor built with React Three Fiber and WebGPU.
+# Modela
+
+**An architectural 3D editor with an AI that actually operates the CAD.**
+
+Describe a house in plain language, drop in a floor plan photo, or point at what's on screen —
+the agent inspects the scene, plans, and builds it. One `Ctrl+Z` undoes the whole thing.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![npm @pascal-app/core](https://img.shields.io/npm/v/@pascal-app/core?label=%40pascal-app%2Fcore)](https://www.npmjs.com/package/@pascal-app/core)
-[![npm @pascal-app/viewer](https://img.shields.io/npm/v/@pascal-app/viewer?label=%40pascal-app%2Fviewer)](https://www.npmjs.com/package/@pascal-app/viewer)
-[![npm @pascal-app/cli](https://img.shields.io/npm/v/@pascal-app/cli?label=%40pascal-app%2Fcli)](https://www.npmjs.com/package/@pascal-app/cli)
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/XRKsDcpqgS)
-[![X (Twitter)](https://img.shields.io/badge/follow-%40pascal__app-black?logo=x&logoColor=white)](https://x.com/pascal_app)
+[![Built on Pascal Editor](https://img.shields.io/badge/built%20on-Pascal%20Editor-6b7280.svg)](https://github.com/pascalorg/editor)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
+[![React Three Fiber](https://img.shields.io/badge/React%20Three%20Fiber-9-000.svg)](https://docs.pmnd.rs/react-three-fiber)
 
-https://github.com/user-attachments/assets/8b50e7cf-cebe-4579-9cf3-8786b35f7b6b
+[Español](README.es.md) · [Architecture](docs/arquitectura/) · [Roadmap](docs/planes/)
 
-## Run the Editor Locally
+</div>
 
-Node.js 22.13 or newer can create a persistent local Pascal installation without
-cloning this repository:
+---
+
+## What this is
+
+Most "AI in CAD" is a chat panel that writes text next to a 3D viewport. Modela is the other
+thing: the model holds typed, validated tools wired straight into the scene graph, so a
+sentence turns into geometry.
+
+```
+> Design a 180 m² house on a 10 × 25 m lot: 3 bedrooms, 2 baths,
+  open kitchen, living-dining, 2-car garage, terrace.
+
+  ✓ Analyzing requirements
+  ✓ Laying out spaces
+  ✓ Building walls          24 walls
+  ✓ Adding doors            9 doors
+  ✓ Adding windows          14 windows
+  ✓ Validating layout       no issues
+
+  Done — 178.4 m² across 9 spaces.
+
+> Make the main bedroom bigger.
+> Move the kitchen 1.5 m to the right.
+> [drops a floor plan photo] Recreate this in 3D.
+```
+
+Every one of those runs against the live scene. Nothing is mocked.
+
+## Why it's built this way
+
+| Decision | Reason |
+|---|---|
+| Tools run **in the browser**, against the live scene | You watch walls appear as the agent works, and native undo keeps working |
+| The LLM is called **from the server** | The API key never reaches a client bundle |
+| The agent talks to `SceneOperations`, never to React | Domain logic stays testable and the UI stays replaceable |
+| One AI turn collapses to **one** history step | `Ctrl+Z` means "undo what the AI just did", not "undo one of 40 mutations" |
+| The provider is an interface, not a dependency | Swap models or vendors without touching the agent |
+| Vision output is split into `observed` / `inferred` / `unknown` | The model never quietly invents a dimension it couldn't see |
+
+## Architecture
+
+```
+                          USER
+                  text ────┴──── image
+                           ↓
+                  ┌────────────────┐
+                  │  Copilot panel │   apps/editor/components/copilot
+                  └────────┬───────┘
+                           ↓
+                   /api/copilot          server — holds the API key
+                           ↓
+        ┌──────────────────────────────────────┐
+        │            packages/ai               │   no React, no DOM
+        │  provider · agent · context · tools  │
+        │  memory  · transaction · validation  │
+        └──────────────────┬───────────────────┘
+                           ↓
+                    SceneOperations              packages/mcp — reused as-is
+                           ↓
+                      SceneBridge
+                           ↓
+                     SCENE GRAPH                 packages/core
+                           ↓
+                      2D / 3D VIEW                packages/viewer
+```
+
+The same `SceneOperations` façade backs both the in-editor copilot and the MCP server, so
+external hosts (Claude Desktop, Claude Code) drive the exact same ~45 tools. One
+implementation, two front doors.
+
+## Quick start
+
+Requires [Bun](https://bun.sh) 1.3+ and Node 20+.
 
 ```bash
-npx @pascal-app/cli editor
-```
-
-The CLI starts the editor and an authenticated MCP service in the background, selects
-collision-free loopback ports, and keeps projects in `~/.pascal/data/pascal.db`. Configure
-an agent to launch `pascal mcp connect`. See [Run Pascal locally](https://editor.pascal.app/docs/developers/local-editor)
-for pnpm/Bun commands, project management, MCP setup, updates, storage paths, and
-troubleshooting.
-
-## Using Published Packages
-
-The viewer runtime and built-in node definitions are separate packages. Install the full built-in
-viewer set, then load the built-in plugin once before mounting `<Viewer>`:
-
-```bash
-npm install @pascal-app/core @pascal-app/viewer @pascal-app/editor @pascal-app/nodes
-```
-
-```typescript
-import { loadPlugin } from '@pascal-app/core'
-import { builtinPlugin } from '@pascal-app/nodes'
-
-await loadPlugin(builtinPlugin)
-```
-
-See the [`@pascal-app/viewer` quick start](packages/viewer/README.md#usage) for a React example.
-
-
-## Repository Architecture
-
-This is a Turborepo monorepo with the reusable editor packages, the standalone app,
-and the CLI that distributes it:
-
-```
-editor/
-├── apps/
-│   └── editor/          # Next.js application
-├── packages/
-│   ├── core/            # Schemas, scene state, and registry contracts
-│   ├── viewer/          # 3D rendering runtime and shared systems
-│   ├── editor/          # Editing tools and UI components
-│   ├── nodes/           # Built-in node definitions, renderers, and systems
-│   ├── cli/             # Persistent local editor installer and process manager
-│   ├── mcp/             # Model Context Protocol server and scene storage
-│   └── ui/              # Shared UI components
-```
-
-### Separation of Concerns
-
-| Package | Responsibility |
-|---------|---------------|
-| **@pascal-app/core** | Node schemas, scene state (Zustand), registry contracts, spatial queries, and event bus |
-| **@pascal-app/viewer** | 3D rendering via React Three Fiber, shared render systems, default camera/controls, and post-processing |
-| **@pascal-app/editor** | Editing tools, panels, selection, and direct-manipulation UI |
-| **@pascal-app/nodes** | Built-in registry plugin with node definitions, renderers, geometry, and systems |
-| **@pascal-app/cli** | Installs and manages a versioned standalone editor runtime and persistent local data |
-| **@pascal-app/mcp** | Exposes scene tools, resources, prompts, and local storage to MCP-compatible AI hosts |
-| **apps/editor** | Standalone Next.js host for the editor packages |
-
-The **viewer** renders the scene with sensible defaults. The **editor** extends it with interactive tools, selection management, and editing capabilities.
-
-### Stores
-
-Each package has its own Zustand store for managing state:
-
-| Store | Package | Responsibility |
-|-------|---------|----------------|
-| `useScene` | `@pascal-app/core` | Scene data: nodes, root IDs, dirty nodes, CRUD operations. Persisted to IndexedDB with undo/redo via Zundo. |
-| `useViewer` | `@pascal-app/viewer` | Viewer state: current selection (building/level/zone IDs), level display mode (stacked/exploded/solo), camera mode. |
-| `useEditor` | `apps/editor` | Editor state: active tool, structure layer visibility, panel states, editor-specific preferences. |
-
-**Access patterns:**
-
-```typescript
-// Subscribe to state changes (React component)
-const nodes = useScene((state) => state.nodes)
-const levelId = useViewer((state) => state.selection.levelId)
-const activeTool = useEditor((state) => state.tool)
-
-// Access state outside React (callbacks, systems)
-const node = useScene.getState().nodes[id]
-useViewer.getState().setSelection({ levelId: 'level_123' })
-```
-
----
-
-## Core Concepts
-
-### Nodes
-
-Nodes are the data primitives that describe the 3D scene. All nodes extend `BaseNode`:
-
-```typescript
-BaseNode {
-  id: string              // Auto-generated with type prefix (e.g., "wall_abc123")
-  type: string            // Discriminator for type-safe handling
-  parentId: string | null // Parent node reference
-  visible: boolean
-  camera?: Camera         // Optional saved camera position
-  metadata?: JSON         // Arbitrary metadata (e.g., { isTransient: true })
-}
-```
-
-**Node Hierarchy:**
-
-```
-Site
-└── Building
-    └── Level
-        ├── Wall → Item (doors, windows)
-        ├── Slab
-        ├── Ceiling → Item (lights)
-        ├── Roof
-        ├── Zone
-        ├── Scan (3D reference)
-        └── Guide (2D reference)
-```
-
-Nodes are stored in a **flat dictionary** (`Record<id, Node>`), not a nested tree. Parent-child relationships are defined via `parentId` and `children` arrays.
-
----
-
-### Scene State (Zustand Store)
-
-The scene is managed by a Zustand store in `@pascal-app/core`:
-
-```typescript
-useScene.getState() = {
-  nodes: Record<id, AnyNode>,  // All nodes
-  rootNodeIds: string[],       // Top-level nodes (sites)
-  dirtyNodes: Set<string>,     // Nodes pending system updates
-
-  createNode(node, parentId),
-  updateNode(id, updates),
-  deleteNode(id),
-}
-```
-
-**Middleware:**
-- **Persist** - Saves to IndexedDB (excludes transient nodes)
-- **Temporal** (Zundo) - Undo/redo with 50-step history
-
----
-
-### Scene Registry
-
-The registry maps node IDs to their Three.js objects for fast lookup:
-
-```typescript
-sceneRegistry = {
-  nodes: Map<id, Object3D>,    // ID → 3D object
-  byType: {
-    wall: Set<id>,
-    item: Set<id>,
-    zone: Set<id>,
-    // ...
-  }
-}
-```
-
-Renderers register their refs using the `useRegistry` hook:
-
-```tsx
-const ref = useRef<Mesh>(null!)
-useRegistry(node.id, 'wall', ref)
-```
-
-This allows systems to access 3D objects directly without traversing the scene graph.
-
----
-
-### Node Renderers
-
-Renderers are React components that create Three.js objects for each node type:
-
-```
-SceneRenderer
-└── NodeRenderer (dispatches by type)
-    ├── BuildingRenderer
-    ├── LevelRenderer
-    ├── WallRenderer
-    ├── SlabRenderer
-    ├── ZoneRenderer
-    ├── ItemRenderer
-    └── ...
-```
-
-**Pattern:**
-1. Renderer creates a placeholder mesh/group
-2. Registers it with `useRegistry`
-3. Systems update geometry based on node data
-
-Example (simplified):
-```tsx
-const WallRenderer = ({ node }) => {
-  const ref = useRef<Mesh>(null!)
-  useRegistry(node.id, 'wall', ref)
-
-  return (
-    <mesh ref={ref}>
-      <boxGeometry args={[0, 0, 0]} />  {/* Replaced by WallSystem */}
-      <meshStandardMaterial />
-      {node.children.map(id => <NodeRenderer key={id} nodeId={id} />)}
-    </mesh>
-  )
-}
-```
-
----
-
-### Systems
-
-Systems are React components that run in the render loop (`useFrame`) to update geometry and transforms. They process **dirty nodes** marked by the store.
-
-**Core Systems (in `@pascal-app/core`):**
-
-| System | Responsibility |
-|--------|---------------|
-| `WallSystem` | Generates wall geometry with mitering and CSG cutouts for doors/windows |
-| `SlabSystem` | Generates floor geometry from polygons |
-| `CeilingSystem` | Generates ceiling geometry |
-| `RoofSystem` | Generates roof geometry |
-| `ItemSystem` | Positions items on walls, ceilings, or floors (slab elevation) |
-
-**Viewer Systems (in `@pascal-app/viewer`):**
-
-| System | Responsibility |
-|--------|---------------|
-| `LevelSystem` | Handles level visibility and vertical positioning (stacked/exploded/solo modes) |
-| `ScanSystem` | Controls 3D scan visibility |
-| `GuideSystem` | Controls guide image visibility |
-
-**Processing Pattern:**
-```typescript
-useFrame(() => {
-  for (const id of dirtyNodes) {
-    const obj = sceneRegistry.nodes.get(id)
-    const node = useScene.getState().nodes[id]
-
-    // Update geometry, transforms, etc.
-    updateGeometry(obj, node)
-
-    dirtyNodes.delete(id)
-  }
-})
-```
-
----
-
-### Dirty Nodes
-
-When a node changes, it's marked as **dirty** in `useScene.getState().dirtyNodes`. Systems check this set each frame and only recompute geometry for dirty nodes.
-
-```typescript
-// Automatic: createNode, updateNode, deleteNode mark nodes dirty
-useScene.getState().updateNode(wallId, { thickness: 0.2 })
-// → wallId added to dirtyNodes
-// → WallSystem regenerates geometry next frame
-// → wallId removed from dirtyNodes
-```
-
-**Manual marking:**
-```typescript
-useScene.getState().dirtyNodes.add(wallId)
-```
-
----
-
-### Event Bus
-
-Inter-component communication uses a typed event emitter (mitt):
-
-```typescript
-// Node events
-emitter.on('wall:click', (event) => { ... })
-emitter.on('item:enter', (event) => { ... })
-emitter.on('zone:context-menu', (event) => { ... })
-
-// Grid events (background)
-emitter.on('grid:click', (event) => { ... })
-
-// Event payload
-NodeEvent {
-  node: AnyNode
-  position: [x, y, z]
-  localPosition: [x, y, z]
-  normal?: [x, y, z]
-  stopPropagation: () => void
-}
-```
-
----
-
-### Spatial Grid Manager
-
-Handles collision detection and placement validation:
-
-```typescript
-spatialGridManager.canPlaceOnFloor(levelId, position, dimensions, rotation)
-spatialGridManager.canPlaceOnWall(wallId, t, height, dimensions)
-spatialGridManager.getSlabElevationAt(levelId, x, z)
-```
-
-Used by item placement tools to validate positions and calculate slab elevations.
-
----
-
-## Editor Architecture
-
-The editor extends the viewer with:
-
-### Tools
-
-Tools are activated via the toolbar and handle user input for specific operations:
-
-- **SelectTool** - Selection and manipulation
-- **WallTool** - Draw walls
-- **ZoneTool** - Create zones
-- **ItemTool** - Place furniture/fixtures
-- **SlabTool** - Create floor slabs
-
-### Selection Manager
-
-The editor uses a custom selection manager with hierarchical navigation:
-
-```
-Site → Building → Level → Zone → Items
-```
-
-Each depth level has its own selection strategy for hover/click behavior.
-
-### Editor-Specific Systems
-
-- `ZoneSystem` - Controls zone visibility based on level mode
-- Custom camera controls with node focusing
-
----
-
-## Data Flow
-
-```
-User Action (click, drag)
-       ↓
-Tool Handler
-       ↓
-useScene.createNode() / updateNode()
-       ↓
-Node added/updated in store
-Node marked dirty
-       ↓
-React re-renders NodeRenderer
-useRegistry() registers 3D object
-       ↓
-System detects dirty node (useFrame)
-Updates geometry via sceneRegistry
-Clears dirty flag
-```
-
----
-
-## Building a Plugin
-
-The editor is extensible: a plugin ships node kinds (schema, 3D/2D rendering, placement tools, inspector parametrics) and left-rail panels through the same `Plugin` manifest the built-ins use — there is no separate internal API.
-
-- **Developer guide** — [Create a plugin](https://editor.pascal.app/docs/developers/plugins): the `Plugin` shape, panel contributions, discovery, lifecycle, and what's in/out of v1.
-- **Worked example** — [`pascalorg/plugin-trees`](https://github.com/pascalorg/plugin-trees): a standalone plugin with procedural trees, flowers, grass, and a presets panel. Clone it as a starting point.
-
----
-
-## Technology Stack
-
-- **React 19** + **Next.js 16**
-- **Three.js** (WebGPU renderer)
-- **React Three Fiber** + **Drei**
-- **Zustand** (state management)
-- **Zod** (schema validation)
-- **Zundo** (undo/redo)
-- **three-bvh-csg** (Boolean geometry operations)
-- **Turborepo** (monorepo management)
-- **Bun** (package manager)
-
----
-
-## Getting Started
-
-### Development
-
-Run the development server from the **root directory** to enable hot reload for all packages:
-
-```bash
-# Install dependencies
+git clone https://github.com/luismellizo/modela.git
+cd modela
 bun install
 
-# Run development server (builds packages + starts editor with watch mode)
-bun dev
-
-# This will:
-# 1. Build @pascal-app/core and @pascal-app/viewer
-# 2. Start watching both packages for changes
-# 3. Start the Next.js editor dev server
-# Open http://localhost:3002
+cp .env.example .env.local     # add your API key
+bun dev                        # http://localhost:3002
 ```
 
-**Important:** Always run `bun dev` from the root directory to ensure the package watchers are running. This enables hot reload when you edit files in `packages/core/src/` or `packages/viewer/src/`.
+The editor runs without an API key — you just don't get the copilot.
 
-### Building for Production
+### Environment
+
+| Variable | Required | Default | What it does |
+|---|---|---|---|
+| `OPENROUTER_API_KEY` | for AI | — | Key from [openrouter.ai/keys](https://openrouter.ai/keys) |
+| `MODELA_AI_PROVIDER` | no | `openrouter` | `openrouter` or `mock` |
+| `MODELA_AI_MODEL` | no | see `.env.example` | Any vision-capable model slug |
+| `MODELA_AI_MAX_STEPS` | no | `24` | Cap on agent loop iterations |
+| `PORT` | no | `3002` | Dev server port |
+
+## Extending it
+
+**Add an AI provider** — implement `AIProvider` in `packages/ai/src/provider/`, register it in
+`registry.ts`. Nothing else changes.
+
+**Add a tool** — define it with `defineTool()` (name, description, Zod input, Zod output,
+handler over `SceneOperations`) and register it. Schema validation and error handling come
+for free.
+
+**Rebrand it** — everything user-facing lives in `packages/brand/`. Name, colors, logo,
+favicon, copy, URLs, metadata. One file.
+
+Full guides in [`docs/arquitectura/`](docs/arquitectura/).
+
+## Repository layout
+
+```
+apps/editor              Next.js app — composes the viewer, editor and copilot
+packages/core            Scene graph, Zod schemas, Zustand store, history
+packages/viewer          3D canvas (React Three Fiber)
+packages/editor          Editing UI — panels, tools, selection
+packages/nodes           Node definitions: wall, window, zone, stair, roof…
+packages/mcp             MCP server, SceneBridge, SceneOperations, storage
+packages/ai              ★ Provider, agent, tools, context, memory, transactions
+packages/brand           ★ Brand configuration
+docs/planes              Phase-by-phase roadmap
+docs/arquitectura        Technical docs for the AI layer
+```
+
+★ = added by Modela. Everything else is upstream Pascal, kept intact and mergeable.
+
+## Commands
 
 ```bash
-# Build all packages
-turbo build
-
-# Build specific package
-turbo build --filter=@pascal-app/core
+bun dev                  # dev server
+bun test                 # tests across all packages
+bun run check-types      # typecheck
+bun run check            # lint + format check
+bun run check:fix        # fix what's fixable
+bun run build            # production build
 ```
 
-### Publishing Packages
+## Roadmap
 
-```bash
-# Build packages
-turbo build --filter=@pascal-app/core --filter=@pascal-app/viewer
+| Phase | What lands | Status |
+|---|---|---|
+| 0 | Fork, brand layer, docs, rules | ✅ |
+| 1 | Native chat, provider abstraction, scene tools, single-step undo | 🚧 |
+| 2 | Image attachments, vision, floor plan → scene | ⬜ |
+| 3 | Agent loop, validation rules, self-correction, alternatives | ⬜ |
+| 4 | Project memory, architectural knowledge base, layout optimization | ⬜ |
 
-# Publish to npm
-npm publish --workspace=@pascal-app/core --access public
-npm publish --workspace=@pascal-app/viewer --access public
-```
+Details in [`docs/planes/`](docs/planes/).
 
----
+## License
 
-## Key Files
+MIT — see [`LICENSE`](LICENSE).
 
-| Path | Description |
-|------|-------------|
-| `packages/core/src/schema/` | Node type definitions (Zod schemas) |
-| `packages/core/src/store/use-scene.ts` | Scene state store |
-| `packages/core/src/hooks/scene-registry/` | 3D object registry |
-| `packages/core/src/systems/` | Geometry generation systems |
-| `packages/viewer/src/components/renderers/` | Node renderers |
-| `packages/viewer/src/components/viewer/` | Main Viewer component |
-| `apps/editor/components/tools/` | Editor tools |
-| `apps/editor/store/` | Editor-specific state |
+Modela is a fork of [**Pascal Editor**](https://github.com/pascalorg/editor) by Pascal Group Inc.,
+also MIT licensed. The 3D editor, scene graph, node system and MCP server are their work; the
+copyright notice is preserved in `LICENSE` alongside ours, as the license requires. The AI
+architecture layer (`packages/ai`, the copilot UI, the brand layer) is Modela's.
+
+If you want the editor without the AI layer, go use Pascal directly — it's excellent.
 
 ---
 
-## Contributing
-
-Bug fixes, features, docs and ideas are all welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) for setup, code style and the PR flow.
-
-- New node kinds and sidebar panels ship as [plugins](https://editor.pascal.app/docs/developers/plugins) rather than edits to the built-ins — [`pascalorg/plugin-trees`](https://github.com/pascalorg/plugin-trees) is a worked example
-- Questions and ideas go to [Discussions](https://github.com/pascalorg/editor/discussions); reproducible bugs go to [Issues](https://github.com/pascalorg/editor/issues)
-- Participation is covered by our [Code of Conduct](CODE_OF_CONDUCT.md)
-- Security problems go to [SECURITY.md](SECURITY.md), not a public issue
-
----
-
-## Contributors
-
-<a href="https://github.com/Aymericr"><img src="https://avatars.githubusercontent.com/u/4444492?v=4" width="60" height="60" alt="Aymeric Rabot" style="border-radius:50%"></a>
-<a href="https://github.com/wass08"><img src="https://avatars.githubusercontent.com/u/6551176?v=4" width="60" height="60" alt="Wassim Samad" style="border-radius:50%"></a>
-<a href="https://github.com/sudhir9297"><img src="https://avatars.githubusercontent.com/sudhir9297?v=4" width="60" height="60" alt="Sudhir" style="border-radius:50%"></a>
-
----
-
-<a href="https://trendshift.io/repositories/23831" target="_blank"><img src="https://trendshift.io/api/badge/repositories/23831" alt="pascalorg/editor | Trendshift" width="250" height="55"/></a>
+<div align="center">
+Built by <a href="https://github.com/luismellizo">Luis Mellizo</a> · Bucaramanga, Colombia
+</div>
