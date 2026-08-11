@@ -8,10 +8,12 @@ import {
   createHttpProvider,
   createSceneTools,
   createToolRegistry,
+  createVisionTools,
 } from '@modela/ai'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getHistoryStore, getSceneOperations, readSelection } from './scene-operations'
 import type { Attachment, ChatMessage, CopilotStatus, ToolActivity } from './types'
+import { captureViewport } from './viewport-capture'
 
 /**
  * The panel's whole state machine.
@@ -74,13 +76,14 @@ export function useCopilot(): UseCopilot {
       {
         provider: createHttpProvider({ endpoint: ENDPOINT, id: 'modela' }),
         tools: createToolRegistry({
-          tools: createSceneTools(),
+          tools: [...createSceneTools(), ...createVisionTools()],
           confirmed: new Set(confirmedRef.current),
         }),
         scene: getSceneOperations(),
         getSelection: readSelection,
         historyStore: getHistoryStore(),
         memory,
+        captureViewport,
       },
       { language: typeof navigator === 'undefined' ? 'en' : navigator.language.slice(0, 2) },
     )

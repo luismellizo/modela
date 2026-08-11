@@ -6,6 +6,7 @@ import { buildArchitectPrompt } from '../prompts/architect'
 import type { AIProvider, Message, TokenUsage, ToolCall } from '../provider/types'
 import { ProviderError } from '../provider/types'
 import type { ToolRegistry } from '../tools/registry'
+import type { VisionContext } from '../tools/types'
 import { DEFAULT_TOOL_LIMITS, type SelectionSnapshot, type ToolLimits } from '../tools/types'
 import type { SceneTransaction, TemporalHistoryStore } from '../transaction/history'
 import { beginSceneTransaction } from '../transaction/history'
@@ -23,6 +24,11 @@ export type AgentDependencies = {
    */
   historyStore?: TemporalHistoryStore<unknown>
   memory: ConversationMemory
+  /**
+   * Renders the current viewport as a data URL. DOM work, so the host owns it;
+   * without it `review_viewport` tells the model to answer from scene data.
+   */
+  captureViewport?: () => Promise<string | null>
 }
 
 export type AgentOptions = {
@@ -89,7 +95,16 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
         }),
       }
 
-      deps.memory.append(userMessage(input.text, input.images ?? []))
+      const images = input.images ?? []
+      deps.memory.append(userMessage(input.text, images))
+
+      // Vision tools reach the provider through the same abstraction the loop
+      // uses, so a mock provider makes them testable too.
+      const vision: VisionContext = {
+        provider: deps.provider,
+        attachments: images,
+        ...(deps.captureViewport ? { captureViewport: deps.captureViewport } : {}),
+      }
 
       const finish = (status: RunResult['status'], error?: RunResult['error']): RunResult => {
         const undoSteps = transaction?.commit().collapsedFrom ?? 0
@@ -191,6 +206,7 @@ export function createAgent(deps: AgentDependencies, options: AgentOptions = {})
               scene: deps.scene,
               selection: deps.getSelection(),
               limits,
+              vision,
               ...(input.signal ? { signal: input.signal } : {}),
             })
 

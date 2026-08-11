@@ -1,7 +1,7 @@
 # CLAUDE.md — Modela
 
 > Documento vivo. **Se actualiza en cada avance** (ver `RULES.md`, regla #1).
-> Última actualización: 2026-08-11 · Fase actual: **1 — MVP del copiloto**
+> Última actualización: 2026-08-11 · Fases 1 y 2 completas · Siguiente: **3 — agente autónomo**
 
 ---
 
@@ -21,12 +21,13 @@ conserva íntegro; Modela añade la capa de IA encima.
 | Fase | Alcance | Estado |
 |---|---|---|
 | 0 | Fork, docs, reglas, branding | ✅ hecho |
-| 1 | Chat nativo, provider, tools, contexto, undo único | 🚧 en curso |
-| 2 | Imágenes, visión, plano → escena | ⬜ pendiente |
+| 1 | Chat nativo, provider, tools, contexto, undo único | ✅ hecho |
+| 2 | Imágenes, visión, plano → escena | ✅ hecho |
 | 3 | Agent loop, validación, autocorrección, alternativas | ⬜ pendiente |
 | 4 | Memoria de proyecto, knowledge base, optimización | ⬜ pendiente |
 
 Planes detallados en [`docs/planes/`](docs/planes/).
+Arquitectura de la capa de IA en [`docs/arquitectura/`](docs/arquitectura/).
 
 ---
 
@@ -108,9 +109,45 @@ Registro: `packages/mcp/src/tools/index.ts` y `packages/mcp/src/tools/vision/ind
 Es el contexto de "haz **esto** más grande".
 
 ### Punto de integración de la UI
-`<Editor sidebarTabs={...}>` en `apps/editor/app/page.tsx`. El componente acepta paneles del
-host como pestañas de primera clase (`packages/editor/src/components/editor/index.tsx:145`).
+`<Editor sidebarTabs={...}>` en `apps/editor/app/page.tsx` y en
+`apps/editor/components/scene-loader.tsx`. El componente acepta paneles del host como
+pestañas de primera clase (`packages/editor/src/components/editor/index.tsx:145`).
 El copiloto entra por ahí — **cero cambios en `packages/editor`**.
+
+---
+
+## Lo que construyó Modela
+
+### `packages/ai` — el motor
+| Módulo | Qué es |
+|---|---|
+| `provider/` | `AIProvider` + adaptadores `openrouter`, `mock` y `http` (cliente sin credenciales) |
+| `agent/agent.ts` | Bucle plan→ejecutar→observar, cancelable, con tope de pasos |
+| `agent/events.ts` | Único contrato entre agente y UI |
+| `tools/` | ~17 herramientas tipadas con Zod sobre `SceneOperations` + 2 de visión |
+| `context/scene-context.ts` | Resumen compacto (~400 tokens en vez de ~120.000) |
+| `memory/conversation.ts` | Recorte por turnos y recibos de resultados antiguos |
+| `transaction/history.ts` | Colapso asíncrono a un solo paso de undo |
+| `vision/` | Validación por bytes, extracción `observed`/`inferred`/`unknown`, plan de obra |
+| `prompts/architect.ts` | Cómo funciona *este* editor, no arquitectura genérica |
+| `testing/fake-scene.ts` | `SceneOperations` falso con historial, para tests sin navegador |
+
+### `apps/editor` — la experiencia
+| Pieza | Ruta |
+|---|---|
+| Proxy con la clave | `app/api/copilot/route.ts` |
+| Panel | `components/copilot/copilot-panel.tsx` |
+| Estado | `components/copilot/use-copilot.ts` |
+| Puente a la escena viva | `components/copilot/scene-operations.ts` |
+| Captura del viewport | `components/copilot/viewport-capture.ts` |
+
+### `packages/brand` — la marca
+Nombre, colores, textos, URLs, metadata y atribución. Cambiar la marca es editar
+`src/index.ts` y nada más.
+
+### Cambio en upstream
+`packages/mcp/package.json` gana dos subpaths de exports (`./tools/geometry`,
+`./tools/asset-catalog`). Aditivo: el merge con upstream sigue limpio.
 
 ---
 
@@ -144,16 +181,21 @@ Un solo paquete: `bun test packages/ai` · `cd packages/ai && bun test`.
 
 ## Variables de entorno
 
-Copiar `.env.example` a `.env.local`. Ver `docs/arquitectura/configuracion.md`.
+Copiar `.env.example` a `.env.local`. Detalle en
+[`docs/arquitectura/configuracion.md`](docs/arquitectura/configuracion.md).
 
 | Variable | Requerida | Para qué |
 |---|---|---|
-| `MODELA_AI_PROVIDER` | no | `openrouter` (por defecto) o `mock` |
 | `OPENROUTER_API_KEY` | sí, para IA real | clave de https://openrouter.ai/keys |
-| `MODELA_AI_MODEL` | no | modelo de texto+visión |
-| `MODELA_AI_MAX_STEPS` | no | tope de iteraciones del agent loop |
+| `MODELA_AI_PROVIDER` | no | `openrouter` (por defecto) o `mock` |
+| `MODELA_AI_MODEL` | no | slug del modelo (necesita tool calling y visión) |
+| `MODELA_AI_VISION_MODEL` | no | modelo aparte para imágenes |
+| `MODELA_AI_MAX_STEPS` | no | tope de iteraciones del agent loop (24) |
+| `MODELA_AI_ENDPOINT` | no | otra pasarela compatible con OpenAI |
 
-Las claves **solo viven en el servidor**. El navegador habla con `/api/copilot`.
+Todas se leen en un único sitio: `packages/ai/src/config.ts`.
+Las claves **solo viven en el servidor**; el navegador habla con `/api/copilot`.
+Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al bundle.
 
 ---
 
@@ -172,3 +214,7 @@ Las claves **solo viven en el servidor**. El navegador habla con `/api/copilot`.
 | Fecha | Avance |
 |---|---|
 | 2026-08-11 | Fork de `pascalorg/editor`, remote `upstream` conservado, docs base y reglas |
+| 2026-08-11 | `packages/ai`: proveedor, agente, herramientas, contexto, memoria, transacción |
+| 2026-08-11 | Copiloto montado como pestaña del editor + `packages/brand` |
+| 2026-08-11 | Fase 2: visión estructurada, `analyze_image`, `review_viewport`, captura del viewport |
+| 2026-08-11 | Documentación de arquitectura en `docs/arquitectura/` |

@@ -23,4 +23,6 @@ export {
   type ToolOutcome,
   type ToolRisk,
   toToolSpec,
+  type VisionContext,
 } from './types'
+export { createVisionTools } from './vision-tools'

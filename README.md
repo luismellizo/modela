@@ -158,9 +158,9 @@ bun run build            # production build
 | Phase | What lands | Status |
 |---|---|---|
 | 0 | Fork, brand layer, docs, rules | ✅ |
-| 1 | Native chat, provider abstraction, scene tools, single-step undo | 🚧 |
-| 2 | Image attachments, vision, floor plan → scene | ⬜ |
-| 3 | Agent loop, validation rules, self-correction, alternatives | ⬜ |
+| 1 | Native chat, provider abstraction, scene tools, single-step undo | ✅ |
+| 2 | Image attachments, vision, floor plan → scene | ✅ |
+| 3 | Agent loop, validation rules, self-correction, alternatives | 🚧 |
 | 4 | Project memory, architectural knowledge base, layout optimization | ⬜ |
 
 Details in [`docs/planes/`](docs/planes/).

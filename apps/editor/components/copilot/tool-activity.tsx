@@ -30,6 +30,8 @@ const VERBS: Record<string, string> = {
   move_node: 'Moving',
   reshape_space: 'Resizing a space',
   delete_node: 'Deleting',
+  analyze_image: 'Reading the image',
+  review_viewport: 'Looking at the view',
 }
 
 export function ToolActivityList({ activity }: { activity: ToolActivity[] }) {

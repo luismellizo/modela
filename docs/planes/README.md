@@ -6,9 +6,9 @@ arquitectónico asistido por IA.
 | Plan | Fase | Objetivo | Estado |
 |---|---|---|---|
 | [`fase-0-fundacion.md`](fase-0-fundacion.md) | 0 | Fork, reglas, marca, documentación | ✅ |
-| [`fase-1-copiloto-mvp.md`](fase-1-copiloto-mvp.md) | 1 | El agente controla la escena por texto | 🚧 |
-| [`fase-2-vision.md`](fase-2-vision.md) | 2 | Imágenes y planos → arquitectura | ⬜ |
-| [`fase-3-agente.md`](fase-3-agente.md) | 3 | Loop autónomo, validación, alternativas | ⬜ |
+| [`fase-1-copiloto-mvp.md`](fase-1-copiloto-mvp.md) | 1 | El agente controla la escena por texto | ✅ |
+| [`fase-2-vision.md`](fase-2-vision.md) | 2 | Imágenes y planos → arquitectura | ✅ |
+| [`fase-3-agente.md`](fase-3-agente.md) | 3 | Loop autónomo, validación, alternativas | 🚧 |
 | [`fase-4-producto.md`](fase-4-producto.md) | 4 | Memoria, conocimiento, optimización | ⬜ |
 
 ## Cómo se lee un plan

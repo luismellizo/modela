@@ -1,6 +1,6 @@
 import type { SceneOperations } from '@pascal-app/mcp/operations'
 import { z } from 'zod'
-import type { ToolSpec } from '../provider/types'
+import type { AIProvider, ToolSpec } from '../provider/types'
 
 /** What a tool can reach. Nothing else — no React, no store, no DOM. */
 export type ToolContext = {
@@ -12,6 +12,22 @@ export type ToolContext = {
   signal?: AbortSignal
   /** Guardrails, so one bad tool call cannot melt the scene. */
   limits: ToolLimits
+  /** Present only when the host can supply images. Vision tools need it. */
+  vision?: VisionContext
+}
+
+/**
+ * Images reach the agent two ways: the user attaches them, or the host renders
+ * the current viewport. `captureViewport` is injected by the app because
+ * grabbing the canvas is DOM work, which this package does not do.
+ */
+export type VisionContext = {
+  provider: AIProvider
+  /** Data URLs attached to the current turn, in the order the user added them. */
+  attachments: string[]
+  captureViewport?: () => Promise<string | null>
+  /** Model to use for image calls. Defaults to the provider's own. */
+  model?: string
 }
 
 export type SelectionSnapshot = {

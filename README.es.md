@@ -157,9 +157,9 @@ bun run build            # build de producción
 | Fase | Qué entra | Estado |
 |---|---|---|
 | 0 | Fork, capa de marca, docs, reglas | ✅ |
-| 1 | Chat nativo, abstracción de proveedor, tools de escena, undo único | 🚧 |
-| 2 | Adjuntos de imagen, visión, plano → escena | ⬜ |
-| 3 | Agent loop, reglas de validación, autocorrección, alternativas | ⬜ |
+| 1 | Chat nativo, abstracción de proveedor, tools de escena, undo único | ✅ |
+| 2 | Adjuntos de imagen, visión, plano → escena | ✅ |
+| 3 | Agent loop, reglas de validación, autocorrección, alternativas | 🚧 |
 | 4 | Memoria de proyecto, base de conocimiento, optimización de distribución | ⬜ |
 
 Detalle en [`docs/planes/`](docs/planes/).
