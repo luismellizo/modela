@@ -1,0 +1,31 @@
+{
+  "name": "@modela/ai",
+  "version": "0.1.0",
+  "description": "AI architect agent for Modela — provider abstraction, scene tools, context and transactions",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./provider": "./src/provider/index.ts",
+    "./tools": "./src/tools/index.ts",
+    "./vision": "./src/vision/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsgo --noEmit",
+    "test": "bun test src"
+  },
+  "peerDependencies": {
+    "@pascal-app/core": "*",
+    "@pascal-app/mcp": "*"
+  },
+  "dependencies": {
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@pascal-app/core": "*",
+    "@pascal-app/mcp": "*",
+    "@pascal/typescript-config": "*",
+    "@types/bun": "^1.3.0",
+    "typescript": "6.0.3"
+  }
+}

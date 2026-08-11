@@ -35,6 +35,16 @@
       "types": "./dist/bridge/index.d.ts",
       "import": "./dist/bridge/index.js",
       "default": "./dist/bridge/index.js"
+    },
+    "./tools/geometry": {
+      "types": "./dist/tools/geometry.d.ts",
+      "import": "./dist/tools/geometry.js",
+      "default": "./dist/tools/geometry.js"
+    },
+    "./tools/asset-catalog": {
+      "types": "./dist/tools/asset-catalog.d.ts",
+      "import": "./dist/tools/asset-catalog.js",
+      "default": "./dist/tools/asset-catalog.js"
     }
   },
   "bin": {
