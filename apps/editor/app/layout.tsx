@@ -1,9 +1,14 @@
+import { brandMetadata } from '@modela/brand'
 import { Agentation } from 'agentation'
 import { GeistPixelSquare } from 'geist/font/pixel'
+import type { Metadata } from 'next'
 import { Barlow } from 'next/font/google'
 import localFont from 'next/font/local'
 import { ClientBootstrap } from './client-bootstrap'
 import './globals.css'
+
+// Product identity lives in `packages/brand` so rebranding is one file.
+export const metadata: Metadata = brandMetadata
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',

@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: [
     'three',
+    '@modela/ai',
+    '@modela/brand',
     '@pascal-app/viewer',
     '@pascal-app/core',
     '@pascal-app/editor',

@@ -41,3 +41,4 @@ export {
   type SceneTransaction,
   type TemporalHistoryStore,
 } from './transaction/history'
+export * from './vision'

@@ -9,7 +9,7 @@ import {
   type SceneGraph,
   type SidebarTab,
 } from '@pascal-app/editor'
-import { Hammer, Layers } from 'lucide-react'
+import { Hammer, Layers, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { type PersistedSceneGraph, sceneGraphSignature } from '@/lib/scene-signature'
 import { cn } from '@/lib/utils'
 import { BuildTab } from './build-tab'
+import { CopilotPanel } from './copilot/copilot-panel'
 import { CommunityViewerToolbarLeft, CommunityViewerToolbarRight } from './viewer-toolbar'
 
 export interface SceneMeta {
@@ -33,6 +34,14 @@ export interface SceneMeta {
 }
 
 const SIDEBAR_TABS: (SidebarTab & { component: React.ComponentType })[] = [
+  {
+    id: 'copilot',
+    label: 'Copilot',
+    component: CopilotPanel,
+    mobileDefaultSnap: 0.7,
+    mobileIcon: <Sparkles className="h-5 w-5" />,
+    icon: <Sparkles className="h-6 w-6" strokeWidth={1.5} />,
+  },
   {
     id: 'site',
     label: 'Scene',

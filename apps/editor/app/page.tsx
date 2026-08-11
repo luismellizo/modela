@@ -1,10 +1,11 @@
 'use client'
 
 import { Editor, ItemsPanel } from '@pascal-app/editor'
-import { Hammer, Layers, Package, Settings } from 'lucide-react'
+import { Hammer, Layers, Package, Settings, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BuildTab } from '@/components/build-tab'
+import { CopilotPanel } from '@/components/copilot/copilot-panel'
 import {
   CommunityViewerToolbarLeft,
   CommunityViewerToolbarRight,
@@ -18,6 +19,14 @@ function EditorItemsPanel() {
 }
 
 const SIDEBAR_TABS = [
+  {
+    id: 'copilot',
+    label: 'Copilot',
+    component: CopilotPanel,
+    mobileDefaultSnap: 0.7,
+    mobileIcon: <Sparkles className="h-5 w-5" />,
+    icon: <Sparkles className="h-6 w-6" strokeWidth={1.5} />,
+  },
   {
     id: 'site',
     label: 'Scene',
