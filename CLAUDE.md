@@ -1,8 +1,9 @@
 # CLAUDE.md — Modela
 
 > Documento vivo. **Se actualiza en cada avance** (ver `RULES.md`, regla #1).
-> Última actualización: 2026-08-11 · Fases 0–2 completas · 3 y 4 avanzadas
-> Siguiente: **probarlo con un modelo real** (ver «Pendiente» al final)
+> Última actualización: 2026-08-12 · Fases 0–2 completas · 3 y 4 avanzadas
+> Probado en el navegador con un modelo real: construye, se revisa y se deshace.
+> Siguiente: **los caminos sin recorrer** (ver «Pendiente» al final)
 
 ---
 
@@ -257,39 +258,28 @@ entered»* con el arreglo concreto → respuesta en español con los 20 m² corr
 
 Es decir: bucle, herramientas, escena viva, validación, idioma y undo único, funcionando.
 
-Lo que **sigue sin probarse** con un modelo real:
-
-| # | Qué pedir | Qué debería pasar |
-|---|---|---|
-| 1 | "Diseña una casa de 180 m² en un lote de 10 × 25 con 3 habitaciones y 2 baños" | Sale un **plan** con aplicar/descartar, no obra hecha |
-| 2 | Seleccionar un muro → "haz esto 20 cm más alto" | Afecta a ese muro y no a otro |
-| 3 | Adjuntar foto de un plano → "recréalo en 3D" | Lo no acotado marcado como estimado |
-| 4 | "Dame otras dos opciones y dime cuál es mejor" | Tres diseños guardados, veredicto razonado |
-| 5 | Lanzar algo largo y cancelar a mitad | Para y la escena queda coherente |
-| 6 | Recargar la página | El encargo sigue ahí (`localStorage`) |
-| 7 | Pedir un borrado | Tarjeta de confirmación antes de tocar nada |
-
 ```bash
-./start.sh          # http://localhost:3002 → pestaña «Copilot»
+./start.sh          # http://localhost:3002 → pestaña «Estudio»
 ```
 
-Guion de aceptación:
+Lo que **sigue sin probarse** con un modelo real, en orden de riesgo:
 
 | # | Qué pedir | Qué debería pasar |
 |---|---|---|
 | 1 | "Diseña una casa de 180 m² en un lote de 10 × 25 con 3 habitaciones y 2 baños" | Sale un **plan** con aplicar/descartar, no obra hecha |
-| 2 | Aplicar el plan | Los espacios aparecen en el viewport mientras corre |
-| 3 | `Ctrl+Z` **una vez** | Desaparece **todo** el turno |
+| 2 | Aplicar ese plan | Los espacios aparecen en el viewport mientras corre |
+| 3 | `Ctrl+Z` **una vez** tras aplicar | Desaparece **todo** el turno |
 | 4 | Seleccionar un muro → "haz esto 20 cm más alto" | Afecta a ese muro y no a otro |
 | 5 | "Mueve la cocina 1.5 m a la derecha" | Se mueve la cocina |
-| 6 | Adjuntar foto de un plano → "recréalo en 3D" | Muros y espacios reconocibles; lo no acotado marcado como estimado |
+| 6 | Adjuntar foto de un plano → "recréalo en 3D" | Muros reconocibles; lo no acotado marcado como estimado |
 | 7 | "¿Qué problemas tiene esta distribución?" | Incidencias reales, con ids que existen |
 | 8 | "Dame otras dos opciones y dime cuál es mejor" | Tres diseños guardados, la actual intacta, veredicto razonado |
 | 9 | Lanzar algo largo y cancelar a mitad | Para y la escena queda coherente |
 | 10 | Recargar la página | El encargo sigue ahí (`localStorage`) |
+| 11 | Pedir un borrado | Tarjeta de confirmación antes de tocar nada |
 
-Los modelos gratis son más flojos que los de pago en tool calling. Si el agente se atasca,
-probar otro desde el selector antes de dar por roto el código.
+Los gratis son más flojos que los de pago en tool calling, y sus rate limits **se ven igual
+que un fallo del código**. Si se atasca, cambiar de modelo en el selector antes de sospechar.
 
 ### 2. Fase 3 — lo que falta
 
