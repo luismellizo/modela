@@ -55,6 +55,11 @@
       "types": "./dist/systems/stair/stair-opening-sync.d.ts",
       "import": "./dist/systems/stair/stair-opening-sync.js",
       "default": "./dist/systems/stair/stair-opening-sync.js"
+    },
+    "./level-height": {
+      "types": "./dist/services/level-height.d.ts",
+      "import": "./dist/services/level-height.js",
+      "default": "./dist/services/level-height.js"
     }
   },
   "files": [

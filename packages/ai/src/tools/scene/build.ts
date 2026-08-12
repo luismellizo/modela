@@ -1,4 +1,4 @@
-import { DEFAULT_LEVEL_HEIGHT } from '@pascal-app/core'
+import { DEFAULT_LEVEL_HEIGHT } from '@pascal-app/core/level-height'
 import type { AnyNodeId } from '@pascal-app/core/schema'
 import { CeilingNode, LevelNode, SlabNode, WallNode, ZoneNode } from '@pascal-app/core/schema'
 import { polygonArea } from '@pascal-app/mcp/tools/geometry'

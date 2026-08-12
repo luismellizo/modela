@@ -7,10 +7,27 @@ export const NodeId = z.string().min(1).describe('Node id, e.g. "wall_a1b2c3"')
 
 export const Vec2 = z.tuple([z.number(), z.number()]).describe('Plan coordinate [x, z] in metres')
 
+/**
+ * Models routinely close the ring by repeating the first point — observed from
+ * Gemma and others on the very first real call this project ever made. The
+ * duplicate would become a zero-length wall, which the design check then
+ * reports as an error the user never caused. Dropping it is kinder than being
+ * right about the schema.
+ */
 export const Polygon = z
   .array(Vec2)
   .min(3)
-  .describe('Closed plan polygon, counter-clockwise, without repeating the first point')
+  .transform((points) => {
+    const first = points[0]
+    const last = points[points.length - 1]
+    if (points.length > 3 && first && last && first[0] === last[0] && first[1] === last[1]) {
+      return points.slice(0, -1)
+    }
+    return points
+  })
+  .describe(
+    'Plan polygon in metres, counter-clockwise. Do not repeat the first point at the end — if you do it is dropped.',
+  )
 
 /** Reads a node and fails with a message the model can act on. */
 export function requireNode(scene: SceneOperations, id: string, expectedType?: string): AnyNode {

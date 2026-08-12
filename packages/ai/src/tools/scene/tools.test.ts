@@ -136,6 +136,27 @@ describe('create_room', () => {
     expect(resolved).toBe(levelId)
   })
 
+  test('a polygon that repeats its first point does not become a dead wall', async () => {
+    // Real behaviour seen from free models: they close the ring. Left alone the
+    // duplicate becomes a zero-length wall and the design check blames the user.
+    const result = expectOk(
+      await call('create_room', {
+        name: 'Closed ring',
+        polygon: [
+          [0, 0],
+          [4, 0],
+          [4, 5],
+          [0, 5],
+          [0, 0],
+        ],
+        levelId,
+      }),
+    )
+
+    expect(result.wallIds).toBeArrayOfSize(4)
+    expect(result.areaSqM).toBe(20)
+  })
+
   test('refuses coordinates outside the allowed range', async () => {
     const outcome = await call('create_room', {
       name: 'Runaway',

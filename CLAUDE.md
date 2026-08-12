@@ -246,11 +246,13 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 
 ## Pendiente
 
-### 1. Probarlo con un modelo real — bloqueante
+### 1. Probar el flujo completo en el editor — bloqueante
 
-**Nada de lo de abajo importa hasta que esto pase.** Hay nueve capas construidas sobre un
-flujo que nunca ha hablado con un modelo de verdad. Los tests usan el proveedor mock: prueban
-que el código hace lo que se le pide, no que el modelo entienda arquitectura.
+El transporte está verificado de punta a punta: `/api/copilot` y `/api/copilot/models`
+responden, y un modelo gratis devolvió un `create_room` correcto (ver §4). Lo que **no** está
+probado es el agente entero dentro del editor: el bucle, la propuesta, el undo, la visión.
+Los tests usan el proveedor mock — prueban que el código hace lo que se le pide, no que el
+modelo entienda arquitectura.
 
 ```bash
 ./start.sh          # http://localhost:3002 → pestaña «Copilot»
@@ -294,7 +296,26 @@ Ambos son pulido interno. No añaden capacidad, la abaratan.
 - **Branching persistente**: los snapshots viven en memoria y mueren al recargar. Persistirlos
   va por el `SceneStore` de `packages/mcp/src/storage/`, no por un segundo almacenamiento.
 
-### 4. Deudas conocidas
+### 4. Modelos gratis: lo que se vio al probarlos
+
+Primera llamada real del proyecto a un modelo (2026-08-11, contra OpenRouter):
+
+| Modelo | Latencia | Tool call |
+|---|---|---|
+| `openai/gpt-oss-20b:free` | 3.7 s | correcto |
+| `google/gemma-4-26b-a4b-it:free` | 3.2 s | correcto, **cierra el polígono** |
+| `nvidia/nemotron-nano-9b-v2:free` | 13.3 s | correcto |
+| `google/gemma-4-31b-it:free` | — | `rate_limited` |
+
+Dos cosas aprendidas:
+
+- Los gratis **sí** hacen tool calling bien. El cuello es el rate limit, no la capacidad.
+- Gemma repite el primer punto para cerrar el anillo. `Polygon` ahora lo descarta: si no,
+  se creaba un muro de longitud cero que la revisión de diseño achacaba al usuario.
+
+Si el agente se atasca, cambiar de modelo en el selector antes de sospechar del código.
+
+### 5. Deudas conocidas
 
 - **El umbral de propuesta vive en el prompt**, no en código. `DEFAULT_PROPOSAL_THRESHOLDS`
   está expuesto pero no se aplica. Si en la práctica el modelo propone poco, endurecerlo.
@@ -305,8 +326,11 @@ Ambos son pulido interno. No añaden capacidad, la abaratan.
 - **`reshape_space` empareja muros por metadata de creación.** Un polígono con distinto número
   de aristas avisa en vez de adivinar, pero no lo resuelve.
 - **Sin tests de la UI.** `packages/ai` está cubierto; los componentes del copiloto no.
+- **Nunca importar el barrel de `@pascal-app/core`** desde `packages/ai`: arrastra sistemas de
+  React Three Fiber y revienta en el servidor. Typecheck, tests y build pasaban igual; solo se
+  vio ejecutándolo. Hay test que lo impide (`src/imports.test.ts`).
 
-### 5. Seguridad
+### 6. Seguridad
 
 - `.env.local` está gitignoreado y **nunca** debe commitearse. El repo es público.
 - La clave actual se pegó en un chat: **rotarla** en https://openrouter.ai/keys antes de
