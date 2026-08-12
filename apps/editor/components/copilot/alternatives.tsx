@@ -28,7 +28,7 @@ export function Alternatives({ snapshots, currentId, disabled, onRestore }: Alte
       <div className="mb-1 flex items-center gap-1.5 px-1">
         <GitBranch className="h-3 w-3 text-muted-foreground" />
         <span className="font-medium text-[10px] text-muted-foreground uppercase tracking-wide">
-          Saved designs
+          Diseños guardados
         </span>
       </div>
 
@@ -54,7 +54,7 @@ export function Alternatives({ snapshots, currentId, disabled, onRestore }: Alte
                 )}
                 <span className="min-w-0 flex-1 truncate">{snapshot.label}</span>
                 <span className="shrink-0 tabular-nums text-[10px] text-muted-foreground">
-                  {snapshot.stats.spaces} sp · {snapshot.stats.floorAreaSqM} m²
+                  {snapshot.stats.spaces} esp · {snapshot.stats.floorAreaSqM} m²
                 </span>
               </button>
             </li>

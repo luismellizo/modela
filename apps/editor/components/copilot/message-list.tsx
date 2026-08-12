@@ -2,7 +2,7 @@
 
 import type { Proposal } from '@modela/ai'
 import { brand } from '@modela/brand'
-import { AlertCircle, Ban, Undo2 } from 'lucide-react'
+import { AlertCircle, ArrowRight, Ban, Undo2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { DesignCheck } from './design-check'
@@ -37,27 +37,48 @@ export function MessageList({
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Deliberately keyed on the whole array, not its length: streaming rewrites
+  // the last message in place, and the view should follow the text as it grows.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: see above
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages])
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 flex-col justify-end gap-3 overflow-y-auto p-4">
-        <div className="space-y-1">
-          <p className="font-medium text-sm">{brand.copilot.title}</p>
-          <p className="text-muted-foreground text-xs leading-relaxed">{brand.copilot.subtitle}</p>
+      // `min-h-0` is what keeps the composer on screen: without it this column
+      // grows to fit its content instead of scrolling, and pushes the input out
+      // of the panel entirely.
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-5 overflow-y-auto px-4 py-6">
+        <div className="space-y-2 text-center">
+          <span className="block text-2xl leading-none opacity-80">{brand.mark}</span>
+          <p className="font-medium text-base">{brand.assistant.title}</p>
+          <p className="text-pretty text-muted-foreground text-xs leading-relaxed">
+            {brand.assistant.subtitle}
+          </p>
         </div>
-        <div className="flex flex-col gap-1.5">
-          {brand.copilot.suggestions.map((suggestion) => (
+
+        <div className="flex flex-col gap-2">
+          <p className="px-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wide">
+            Prueba con
+          </p>
+          {brand.assistant.suggestions.map((suggestion) => (
             <button
-              className="rounded-md border border-border/60 px-2.5 py-2 text-left text-muted-foreground text-xs transition-colors hover:border-border hover:bg-accent/50 hover:text-foreground disabled:opacity-40"
+              className={cn(
+                'group rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left text-xs leading-relaxed transition-colors',
+                'hover:border-border hover:bg-accent/60 disabled:opacity-40',
+              )}
               disabled={disabled}
               key={suggestion}
               onClick={() => onSuggestion(suggestion)}
               type="button"
             >
-              {suggestion}
+              <span className="flex items-start gap-2">
+                <ArrowRight className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                <span className="text-pretty text-muted-foreground group-hover:text-foreground">
+                  {suggestion}
+                </span>
+              </span>
             </button>
           ))}
         </div>
@@ -66,7 +87,7 @@ export function MessageList({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
       {messages.map((message) =>
         message.role === 'user' ? (
           <UserBubble key={message.id} message={message} />
@@ -140,7 +161,9 @@ function AssistantBlock({
   return (
     <div className="flex flex-col gap-1">
       {showThinking && (
-        <p className="animate-pulse px-1 text-muted-foreground text-xs">{brand.copilot.thinking}</p>
+        <p className="animate-pulse px-1 text-muted-foreground text-xs">
+          {brand.assistant.thinking}
+        </p>
       )}
 
       <ToolActivityList activity={message.activity} />
@@ -172,7 +195,7 @@ function AssistantBlock({
 
       {message.status === 'max-steps' && (
         <p className="px-1 text-[11px] text-muted-foreground">
-          Stopped at the step limit. Ask me to continue if that was too early.
+          Me detuve en el límite de pasos. Dime si quieres que siga.
         </p>
       )}
 
@@ -190,7 +213,7 @@ function AssistantBlock({
       {message.proposalOutcome === 'discarded' && (
         <p className="flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
           <Ban className="h-3 w-3" />
-          Plan discarded. Nothing was built.
+          Plan descartado. No se construyó nada.
         </p>
       )}
 
@@ -212,7 +235,7 @@ function AssistantBlock({
           type="button"
         >
           <Undo2 className="h-3 w-3" />
-          Undo these changes
+          Deshacer estos cambios
         </button>
       )}
     </div>

@@ -3,7 +3,7 @@
  *
  * Rebranding this fork means editing this file — not grepping the app for
  * hardcoded names. `apps/editor` reads `brand` for page metadata and the
- * copilot UI reads `brand.copilot` for its labels.
+ * assistant UI reads `brand.assistant` for its labels.
  */
 
 export type BrandColors = {
@@ -27,8 +27,8 @@ export type BrandLinks = {
   issues: string
 }
 
-export type CopilotCopy = {
-  /** Panel title. */
+export type AssistantCopy = {
+  /** Panel title — the assistant's name, not the product's. */
   title: string
   /** One-line description under the title on the empty state. */
   subtitle: string
@@ -56,7 +56,7 @@ export type Brand = {
   favicon: string
   colors: BrandColors
   links: BrandLinks
-  copilot: CopilotCopy
+  assistant: AssistantCopy
   /** Attribution that must stay visible — see LICENSE. */
   attribution: {
     upstreamName: string
@@ -92,17 +92,17 @@ export const brand: Brand = {
     issues: 'https://github.com/luismellizo/modela/issues',
   },
 
-  copilot: {
-    title: 'Copilot',
-    subtitle: 'Describe what you want to build. I work directly on the scene.',
-    placeholder: 'Describe a space, a change, or drop a floor plan…',
+  assistant: {
+    title: 'Estudio',
+    subtitle: 'Describe lo que quieres construir. Trabajo directamente sobre la escena.',
+    placeholder: 'Describe un espacio, un cambio, o suelta un plano…',
     missingKey:
-      'No AI provider configured. Add OPENROUTER_API_KEY to .env.local and restart the dev server.',
-    thinking: 'Thinking…',
+      'Falta configurar el proveedor de IA. Añade OPENROUTER_API_KEY a .env.local y reinicia el servidor.',
+    thinking: 'Pensando…',
     suggestions: [
-      'Design a 180 m² house on a 10 × 25 m lot with 3 bedrooms and 2 baths',
-      'Add a window on the north wall of the living room',
-      'What would you improve about this layout?',
+      'Diseña una casa de 180 m² en un lote de 10 × 25 m con 3 habitaciones y 2 baños',
+      'Añade una ventana en el muro norte de la sala',
+      '¿Qué mejorarías de esta distribución?',
     ],
   },
 

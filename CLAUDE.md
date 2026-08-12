@@ -145,7 +145,7 @@ El copiloto entra por ahí — **cero cambios en `packages/editor`**.
 | Pieza | Ruta |
 |---|---|
 | Proxy con la clave | `app/api/copilot/route.ts` |
-| Panel | `components/copilot/copilot-panel.tsx` |
+| Panel («Estudio») | `components/copilot/assistant-panel.tsx` |
 | Estado | `components/copilot/use-copilot.ts` |
 | Puente a la escena viva | `components/copilot/scene-operations.ts` |
 | Tarjeta de plan y confirmación | `components/copilot/proposal-card.tsx` |
@@ -241,6 +241,7 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 | 2026-08-11 | Memoria de proyecto persistente y base de conocimiento arquitectónico |
 | 2026-08-11 | Puntuación de distribuciones y comparación razonada de alternativas |
 | 2026-08-11 | Selector de modelos gratis, validación en servidor y `start.sh` |
+| 2026-08-12 | El asistente se llama **Estudio**; UI en español; layout del panel arreglado |
 
 ---
 
@@ -351,7 +352,11 @@ los rate limits del gratis son frecuentes y se ven igual que un fallo.
   llamada "Zona 3" queda fuera de todos los objetivos que dependen del tipo.
 - **`reshape_space` empareja muros por metadata de creación.** Un polígono con distinto número
   de aristas avisa en vez de adivinar, pero no lo resuelve.
-- **Sin tests de la UI.** `packages/ai` está cubierto; los componentes del copiloto no.
+- **Sin tests de la UI.** `packages/ai` está cubierto; los componentes del panel no. Los dos
+  fallos de layout (composer fuera de pantalla, desplegable recortado) solo se vieron mirando.
+- **Error de hidratación en `BuildTab`**, de upstream: el plugin Streetscape registra su
+  herramienta solo en cliente, así que la lista del servidor va desfasada una posición. No es
+  de la capa de IA y no se ha tocado.
 - **Nunca importar el barrel de `@pascal-app/core`** desde `packages/ai`: arrastra sistemas de
   React Three Fiber y revienta en el servidor. Typecheck, tests y build pasaban igual; solo se
   vio ejecutándolo. Hay test que lo impide (`src/imports.test.ts`).

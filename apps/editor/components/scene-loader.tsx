@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { type PersistedSceneGraph, sceneGraphSignature } from '@/lib/scene-signature'
 import { cn } from '@/lib/utils'
 import { BuildTab } from './build-tab'
-import { CopilotPanel } from './copilot/copilot-panel'
+import { AssistantPanel } from './copilot/assistant-panel'
 import { CommunityViewerToolbarLeft, CommunityViewerToolbarRight } from './viewer-toolbar'
 
 export interface SceneMeta {
@@ -35,9 +35,9 @@ export interface SceneMeta {
 
 const SIDEBAR_TABS: (SidebarTab & { component: React.ComponentType })[] = [
   {
-    id: 'copilot',
-    label: 'Copilot',
-    component: CopilotPanel,
+    id: 'assistant',
+    label: 'Estudio',
+    component: AssistantPanel,
     mobileDefaultSnap: 0.7,
     mobileIcon: <Sparkles className="h-5 w-5" />,
     icon: <Sparkles className="h-6 w-6" strokeWidth={1.5} />,

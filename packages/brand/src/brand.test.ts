@@ -28,16 +28,16 @@ describe('brand', () => {
     }
   })
 
-  test('copilot copy has everything the panel renders', () => {
-    expect(brand.copilot.title.length).toBeGreaterThan(0)
-    expect(brand.copilot.subtitle.length).toBeGreaterThan(0)
-    expect(brand.copilot.placeholder.length).toBeGreaterThan(0)
-    expect(brand.copilot.thinking.length).toBeGreaterThan(0)
-    expect(brand.copilot.suggestions.length).toBeGreaterThan(0)
+  test('assistant copy has everything the panel renders', () => {
+    expect(brand.assistant.title.length).toBeGreaterThan(0)
+    expect(brand.assistant.subtitle.length).toBeGreaterThan(0)
+    expect(brand.assistant.placeholder.length).toBeGreaterThan(0)
+    expect(brand.assistant.thinking.length).toBeGreaterThan(0)
+    expect(brand.assistant.suggestions.length).toBeGreaterThan(0)
   })
 
   test('the missing-key message names the variable to set', () => {
-    expect(brand.copilot.missingKey).toContain('OPENROUTER_API_KEY')
+    expect(brand.assistant.missingKey).toContain('OPENROUTER_API_KEY')
   })
 
   test('upstream attribution survives any rebrand', () => {

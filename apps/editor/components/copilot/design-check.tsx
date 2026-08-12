@@ -27,7 +27,7 @@ export function DesignCheck({ report, correcting }: DesignCheckProps) {
     return (
       <p className="flex items-center gap-1.5 px-1 text-[11px] text-violet-600 dark:text-violet-400">
         <Loader2 className="h-3 w-3 animate-spin" />
-        Found {report.errors} problem{report.errors === 1 ? '' : 's'} — fixing
+        {report.errors} problema{report.errors === 1 ? '' : 's'} — corrigiendo
       </p>
     )
   }
@@ -36,7 +36,7 @@ export function DesignCheck({ report, correcting }: DesignCheckProps) {
     return (
       <p className="flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
         <CircleCheck className="h-3 w-3 text-emerald-500" />
-        Design check passed
+        Revisión de diseño sin incidencias
       </p>
     )
   }
@@ -55,9 +55,9 @@ export function DesignCheck({ report, correcting }: DesignCheckProps) {
         )}
         <span className="flex-1">
           {summarise(report)}
-          {report.errors > 0 && ' — unresolved'}
+          {report.errors > 0 && ' — sin resolver'}
         </span>
-        <span className="text-muted-foreground">{expanded ? 'Hide' : 'Show'}</span>
+        <span className="text-muted-foreground">{expanded ? 'Ocultar' : 'Ver'}</span>
       </button>
 
       {expanded && (
@@ -97,9 +97,9 @@ function IssueRow({ issue }: { issue: ValidationIssue }) {
 
 function summarise(report: ValidationReport): string {
   const parts: string[] = []
-  if (report.errors > 0) parts.push(`${report.errors} error${report.errors === 1 ? '' : 's'}`)
+  if (report.errors > 0) parts.push(`${report.errors} error${report.errors === 1 ? '' : 'es'}`)
   if (report.warnings > 0) {
-    parts.push(`${report.warnings} warning${report.warnings === 1 ? '' : 's'}`)
+    parts.push(`${report.warnings} aviso${report.warnings === 1 ? '' : 's'}`)
   }
   return parts.join(', ')
 }

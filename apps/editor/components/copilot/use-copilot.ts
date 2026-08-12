@@ -115,12 +115,12 @@ export function useCopilot(): UseCopilot {
         setStatus(
           payload.enabled
             ? { state: 'ready', provider: payload.provider, model: payload.model }
-            : { state: 'disabled', reason: payload.reason ?? 'AI is not configured' },
+            : { state: 'disabled', reason: payload.reason ?? 'La IA no está configurada' },
         )
       })
       .catch(() => {
         if (!cancelled) {
-          setStatus({ state: 'disabled', reason: 'Could not reach the copilot service' })
+          setStatus({ state: 'disabled', reason: 'No se pudo contactar con el servicio de IA' })
         }
       })
     return () => {
@@ -434,7 +434,7 @@ export function useCopilot(): UseCopilot {
           message.undoSteps = result.undoSteps
           message.proposalOutcome = result.failed.length > 0 ? 'partial' : 'applied'
           if (result.failed.length > 0) {
-            message.text = `${message.text}\n\nApplied ${result.applied} of ${proposal.calls.length} steps. ${result.failed.length} failed — see the activity above.`
+            message.text = `${message.text}\n\nApliqué ${result.applied} de ${proposal.calls.length} pasos. ${result.failed.length} fallaron — mira la actividad de arriba.`
           }
         })
 

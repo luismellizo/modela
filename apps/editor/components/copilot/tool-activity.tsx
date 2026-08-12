@@ -14,35 +14,35 @@ import type { ToolActivity } from './types'
  */
 
 const VERBS: Record<string, string> = {
-  get_scene_overview: 'Reading the scene',
-  find_nodes: 'Looking for elements',
-  describe_node: 'Inspecting',
-  get_selection: 'Checking your selection',
-  validate_scene: 'Validating',
-  create_level: 'Adding a storey',
-  create_room: 'Creating a space',
-  create_wall: 'Building a wall',
-  add_door: 'Adding a door',
-  add_window: 'Adding a window',
-  search_items: 'Searching the catalog',
-  place_item: 'Placing furniture',
-  update_node: 'Adjusting',
-  move_node: 'Moving',
-  reshape_space: 'Resizing a space',
-  delete_node: 'Deleting',
-  analyze_image: 'Reading the image',
-  review_viewport: 'Looking at the view',
-  propose_plan: 'Putting a plan together',
-  check_design: 'Checking the design',
-  save_snapshot: 'Saving this version',
-  restore_snapshot: 'Going back to a saved version',
-  list_snapshots: 'Listing saved versions',
-  remember_project_fact: 'Noting that down',
-  get_project_brief: 'Recalling the brief',
-  forget_project_fact: 'Forgetting that',
-  query_architecture_knowledge: 'Checking reference dimensions',
-  score_layout: 'Rating the layout',
-  compare_layouts: 'Comparing the options',
+  get_scene_overview: 'Leyendo la escena',
+  find_nodes: 'Buscando elementos',
+  describe_node: 'Inspeccionando',
+  get_selection: 'Mirando tu selección',
+  validate_scene: 'Validando',
+  create_level: 'Añadiendo una planta',
+  create_room: 'Creando un espacio',
+  create_wall: 'Levantando un muro',
+  add_door: 'Poniendo una puerta',
+  add_window: 'Poniendo una ventana',
+  search_items: 'Buscando en el catálogo',
+  place_item: 'Colocando mobiliario',
+  update_node: 'Ajustando',
+  move_node: 'Moviendo',
+  reshape_space: 'Redimensionando un espacio',
+  delete_node: 'Borrando',
+  analyze_image: 'Leyendo la imagen',
+  review_viewport: 'Mirando la vista',
+  propose_plan: 'Preparando un plan',
+  check_design: 'Revisando el diseño',
+  save_snapshot: 'Guardando esta versión',
+  restore_snapshot: 'Volviendo a una versión guardada',
+  list_snapshots: 'Listando versiones guardadas',
+  remember_project_fact: 'Anotando eso',
+  get_project_brief: 'Recordando el encargo',
+  forget_project_fact: 'Olvidando eso',
+  query_architecture_knowledge: 'Consultando dimensiones de referencia',
+  score_layout: 'Puntuando la distribución',
+  compare_layouts: 'Comparando las opciones',
 }
 
 export function ToolActivityList({ activity }: { activity: ToolActivity[] }) {
@@ -88,16 +88,16 @@ function ToolActivityRow({ entry }: { entry: ToolActivity }) {
 
       {expanded && (
         <div className="mt-1 mb-1 ml-6 space-y-1.5 rounded-md border border-border/60 bg-muted/40 p-2">
-          <Detail label="Tool" value={entry.tool} />
-          <Detail label="Arguments" value={format(entry.arguments)} mono />
+          <Detail label="Herramienta" value={entry.tool} />
+          <Detail label="Argumentos" value={format(entry.arguments)} mono />
           {entry.error ? (
             <>
               <Detail label="Error" value={`${entry.error.code} — ${entry.error.message}`} />
-              {entry.error.hint && <Detail label="Hint" value={entry.error.hint} />}
+              {entry.error.hint && <Detail label="Pista" value={entry.error.hint} />}
             </>
           ) : (
             entry.result !== undefined && (
-              <Detail label="Result" value={format(entry.result)} mono />
+              <Detail label="Resultado" value={format(entry.result)} mono />
             )
           )}
         </div>

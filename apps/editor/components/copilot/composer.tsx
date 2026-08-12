@@ -33,7 +33,7 @@ export function Composer({ disabled, running, onSend, onCancel }: ComposerProps)
 
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) {
-        setError(`${file.name} is not an image`)
+        setError(`${file.name} no es una imagen`)
         continue
       }
       const url = await readAsDataUrl(file)
@@ -111,7 +111,7 @@ export function Composer({ disabled, running, onSend, onCancel }: ComposerProps)
                 src={attachment.url}
               />
               <button
-                aria-label={`Remove ${attachment.name}`}
+                aria-label={`Quitar ${attachment.name}`}
                 className="absolute top-0.5 right-0.5 rounded bg-background/90 p-0.5 opacity-0 transition-opacity group-hover:opacity-100"
                 onClick={() =>
                   setAttachments((current) => current.filter((entry) => entry.id !== attachment.id))
@@ -129,7 +129,7 @@ export function Composer({ disabled, running, onSend, onCancel }: ComposerProps)
 
       <div className="flex items-end gap-1.5 rounded-lg border border-border/60 bg-background px-2 py-1.5 focus-within:border-border">
         <button
-          aria-label="Attach an image"
+          aria-label="Adjuntar una imagen"
           className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
@@ -162,7 +162,7 @@ export function Composer({ disabled, running, onSend, onCancel }: ComposerProps)
             }
           }}
           onPaste={handlePaste}
-          placeholder={brand.copilot.placeholder}
+          placeholder={brand.assistant.placeholder}
           ref={textareaRef}
           rows={1}
           value={text}
@@ -170,7 +170,7 @@ export function Composer({ disabled, running, onSend, onCancel }: ComposerProps)
 
         {running ? (
           <button
-            aria-label="Stop"
+            aria-label="Detener"
             className="shrink-0 rounded-md bg-foreground p-1.5 text-background transition-opacity hover:opacity-80"
             onClick={onCancel}
             type="button"
@@ -179,7 +179,7 @@ export function Composer({ disabled, running, onSend, onCancel }: ComposerProps)
           </button>
         ) : (
           <button
-            aria-label="Send"
+            aria-label="Enviar"
             className="shrink-0 rounded-md bg-foreground p-1.5 text-background transition-opacity hover:opacity-80 disabled:opacity-30"
             disabled={disabled || text.trim() === ''}
             onClick={submit}
@@ -197,7 +197,7 @@ function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(new Error(`Could not read ${file.name}`))
+    reader.onerror = () => reject(new Error(`No se pudo leer ${file.name}`))
     reader.readAsDataURL(file)
   })
 }

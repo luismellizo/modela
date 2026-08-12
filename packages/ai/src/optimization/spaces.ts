@@ -113,7 +113,7 @@ function facingOf(
   const wallId = (window as { wallId?: string }).wallId ?? window.parentId
   if (!wallId) return null
   const wall = view.nodes[wallId as keyof typeof view.nodes]
-  if (!wall || wall.type !== 'wall') return null
+  if (wall?.type !== 'wall') return null
 
   const [sx, sz] = wall.start as [number, number]
   const [ex, ez] = wall.end as [number, number]

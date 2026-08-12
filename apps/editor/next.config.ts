@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
   logging: {
     browserToTerminal: true,
   },
+  // Default is bottom-left, which sits exactly on top of the assistant's input
+  // box — the sidebar is on the left and the composer is at its foot.
+  devIndicators: {
+    position: 'bottom-right',
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

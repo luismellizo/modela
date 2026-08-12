@@ -9,11 +9,15 @@ import { cn } from '@/lib/utils'
  * Model picker.
  *
  * Every model listed can call tools — the server filters for it — because one
- * that cannot would give you a copilot that talks and never builds, and the
- * failure would look like the agent being stupid rather than misconfigured.
- *
+ * that cannot would give you an assistant that talks and never builds, and the
+ * failure would look like the model being stupid rather than misconfigured.
  * Vision is flagged rather than required: plenty of good free models cannot read
  * images, and that only costs you attachments.
+ *
+ * The menu is positioned `inset-x-0` against the panel header rather than
+ * against the button. Anchored to the button it opened past the sidebar's edge
+ * and half of every name was unreadable — a sidebar is narrow and a dropdown
+ * cannot assume room to its side.
  */
 
 export type ModelPickerProps = {
@@ -26,15 +30,27 @@ export type ModelPickerProps = {
 
 export function ModelPicker({ models, selected, freeOnly, disabled, onSelect }: ModelPickerProps) {
   const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
+
     const close = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false)
+      const target = event.target as Node
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      setOpen(false)
     }
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
     document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', onEscape)
+    }
   }, [open])
 
   if (models.length === 0) return null
@@ -42,34 +58,43 @@ export function ModelPicker({ models, selected, freeOnly, disabled, onSelect }: 
   const current = models.find((model) => model.id === selected) ?? models[0]
 
   return (
-    <div className="relative" ref={containerRef}>
+    <>
       <button
-        className="flex max-w-[13rem] items-center gap-1 rounded px-1 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+        className="mt-0.5 flex w-full items-center gap-1 rounded px-0.5 py-0.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
         disabled={disabled}
         onClick={() => setOpen((value) => !value)}
+        ref={buttonRef}
         type="button"
       >
-        <span className="truncate">{shortName(current?.name ?? current?.id ?? '')}</span>
-        <ChevronDown className="h-2.5 w-2.5 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">
+          {shortName(current?.name ?? current?.id ?? '')}
+        </span>
+        {current && !current.vision && (
+          <span className="shrink-0 text-[10px] opacity-70">sin imágenes</span>
+        )}
+        <ChevronDown
+          className={cn('h-3 w-3 shrink-0 transition-transform', open && 'rotate-180')}
+        />
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 z-50 mt-1 max-h-72 w-72 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg">
-          <div className="sticky top-0 border-border/60 border-b bg-popover px-2.5 py-1.5">
-            <p className="font-medium text-[10px] text-muted-foreground uppercase tracking-wide">
-              {freeOnly ? 'Free models' : 'Models'} · all can call tools
-            </p>
-          </div>
+        <div
+          className="absolute inset-x-2 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-popover shadow-xl"
+          ref={menuRef}
+        >
+          <p className="border-border/60 border-b px-3 py-2 font-medium text-[10px] text-muted-foreground uppercase tracking-wide">
+            {freeOnly ? 'Modelos gratis' : 'Modelos'} · todos usan herramientas
+          </p>
 
-          <ul className="p-1">
+          <ul className="max-h-[min(60vh,20rem)] overflow-y-auto p-1">
             {models.map((model) => {
               const isCurrent = model.id === current?.id
               return (
                 <li key={model.id}>
                   <button
                     className={cn(
-                      'flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
-                      isCurrent ? 'bg-accent' : 'hover:bg-accent/50',
+                      'flex w-full items-start gap-2 rounded-md px-2 py-2 text-left transition-colors',
+                      isCurrent ? 'bg-accent' : 'hover:bg-accent/60',
                     )}
                     onClick={() => {
                       onSelect(model.id)
@@ -79,26 +104,28 @@ export function ModelPicker({ models, selected, freeOnly, disabled, onSelect }: 
                   >
                     <Check
                       className={cn(
-                        'mt-0.5 h-3 w-3 shrink-0 text-emerald-500',
+                        'mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500',
                         isCurrent ? 'opacity-100' : 'opacity-0',
                       )}
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs">{shortName(model.name)}</span>
-                      <span className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <span className="block truncate font-medium text-xs">
+                        {shortName(model.name)}
+                      </span>
+                      <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-muted-foreground">
                         {model.vision ? (
-                          <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                             <Eye className="h-2.5 w-2.5" />
-                            images
+                            lee imágenes
                           </span>
                         ) : (
-                          <span className="flex items-center gap-0.5">
+                          <span className="flex items-center gap-1">
                             <EyeOff className="h-2.5 w-2.5" />
-                            text only
+                            solo texto
                           </span>
                         )}
                         {model.contextLength > 0 && (
-                          <span>{formatContext(model.contextLength)} ctx</span>
+                          <span>{formatContext(model.contextLength)} de contexto</span>
                         )}
                       </span>
                     </span>
@@ -109,7 +136,7 @@ export function ModelPicker({ models, selected, freeOnly, disabled, onSelect }: 
           </ul>
         </div>
       )}
-    </div>
+    </>
   )
 }
 

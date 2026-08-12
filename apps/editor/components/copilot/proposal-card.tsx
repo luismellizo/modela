@@ -54,7 +54,7 @@ export function ProposalCard({ proposal, disabled, onApply, onDiscard }: Proposa
               onClick={() => setExpanded(true)}
               type="button"
             >
-              Show {hidden} more step{hidden === 1 ? '' : 's'}
+              Ver {hidden} paso{hidden === 1 ? '' : 's'} más
             </button>
           </li>
         )}
@@ -84,7 +84,7 @@ export function ProposalCard({ proposal, disabled, onApply, onDiscard }: Proposa
           onClick={onApply}
           type="button"
         >
-          Apply {proposal.calls.length} change{proposal.calls.length === 1 ? '' : 's'}
+          Aplicar {proposal.calls.length} cambio{proposal.calls.length === 1 ? '' : 's'}
         </button>
         <button
           className="rounded-md border border-border/60 px-3 py-1.5 text-muted-foreground text-xs transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-40"
@@ -92,7 +92,7 @@ export function ProposalCard({ proposal, disabled, onApply, onDiscard }: Proposa
           onClick={onDiscard}
           type="button"
         >
-          Discard
+          Descartar
         </button>
       </div>
     </div>
@@ -120,7 +120,7 @@ export function ConfirmToolCard({
       <div className="flex items-start gap-2">
         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-xs">Approve {tool.replace(/_/g, ' ')}?</p>
+          <p className="font-medium text-xs">¿Autorizar {tool.replace(/_/g, ' ')}?</p>
           <p className="mt-0.5 break-words font-mono text-[10px] text-muted-foreground">
             {summarise(args)}
           </p>
@@ -133,7 +133,7 @@ export function ConfirmToolCard({
           onClick={onApprove}
           type="button"
         >
-          Approve
+          Autorizar
         </button>
         <button
           className="rounded-md border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-40"
