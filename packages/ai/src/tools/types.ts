@@ -119,11 +119,84 @@ export type ToolOutcome =
   | { ok: true; result: unknown }
   | { ok: false; code: ToolErrorCode; message: string; hint?: string }
 
+/**
+ * Lowest-common-denominator JSON Schema for tool declarations.
+ *
+ * Zod emits correct 2020-12 JSON Schema. Function-calling APIs accept a much
+ * smaller dialect, and they refuse the whole tool list rather than ignoring
+ * what they do not know. Two real refusals, both found only by running the
+ * copilot against a live model:
+ *
+ *     GenerateContentRequest…properties[start].items: missing field
+ *     auto tool schema uses unsupported assertions or reserved metadata
+ *
+ * The first was `prefixItems` (how Zod encodes a tuple, and every coordinate
+ * here is a tuple). The second was `propertyNames`, `pattern`,
+ * `exclusiveMinimum` and friends. Either one killed *every* tool call on a
+ * Gemini-family model — the copilot could not touch the scene at all.
+ *
+ * Hence an allowlist rather than a growing list of things to strip: an unknown
+ * keyword should be dropped by default, because the cost of guessing wrong is
+ * total failure rather than a slightly looser schema.
+ *
+ * **The advertised schema is a hint; Zod is the gate.** Dropping `minimum` does
+ * not let a bad value through — `registry.execute` still parses against the
+ * full schema and hands the model a precise error to correct. What is lost is
+ * only some up-front guidance, and the `.describe()` text carries most of that.
+ */
+const ALLOWED_KEYWORDS = new Set([
+  'type',
+  'description',
+  'enum',
+  'items',
+  'properties',
+  'required',
+  'minItems',
+  'maxItems',
+  'nullable',
+])
+
+export function normalizeJsonSchema(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(normalizeJsonSchema)
+  if (node === null || typeof node !== 'object') return node
+
+  const source = node as Record<string, unknown>
+  const out: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(source)) {
+    if (!ALLOWED_KEYWORDS.has(key)) continue
+    if (key === 'properties' && value && typeof value === 'object') {
+      out.properties = Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([name, schema]) => [
+          name,
+          normalizeJsonSchema(schema),
+        ]),
+      )
+      continue
+    }
+    out[key] = normalizeJsonSchema(value)
+  }
+
+  const prefixItems = source.prefixItems
+  if (Array.isArray(prefixItems) && prefixItems.length > 0) {
+    // Our tuples are homogeneous ([number, number]), so the first entry
+    // describes them all. Length survives as minItems/maxItems.
+    out.items = normalizeJsonSchema(prefixItems[0])
+    out.minItems = prefixItems.length
+    out.maxItems = prefixItems.length
+  }
+
+  return out
+}
+
 /** Converts a tool definition into the JSON Schema shape a model expects. */
 export function toToolSpec(definition: ToolDefinition): ToolSpec {
   return {
     name: definition.name,
     description: definition.description,
-    parameters: z.toJSONSchema(definition.input, { io: 'input' }) as Record<string, unknown>,
+    parameters: normalizeJsonSchema(z.toJSONSchema(definition.input, { io: 'input' })) as Record<
+      string,
+      unknown
+    >,
   }
 }

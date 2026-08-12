@@ -246,13 +246,27 @@ Ninguna variable de IA lleva prefijo `NEXT_PUBLIC_` — hacerlo la filtraría al
 
 ## Pendiente
 
-### 1. Probar el flujo completo en el editor — bloqueante
+### 1. Probar los caminos que aún no se han recorrido
 
-El transporte está verificado de punta a punta: `/api/copilot` y `/api/copilot/models`
-responden, y un modelo gratis devolvió un `create_room` correcto (ver §4). Lo que **no** está
-probado es el agente entero dentro del editor: el bucle, la propuesta, el undo, la visión.
-Los tests usan el proveedor mock — prueban que el código hace lo que se le pide, no que el
-modelo entienda arquitectura.
+**Verificado en el navegador el 2026-08-11** con `nvidia/nemotron-nano-9b-v2:free`:
+«Crea una habitación de 4 por 5 metros llamada Dormitorio» → `create_room` → cuatro muros,
+losa y techo en el 3D → revisión automática → *«zone "Dormitorio" has no door — it cannot be
+entered»* con el arreglo concreto → respuesta en español con los 20 m² correctos → botón
+«Undo these changes».
+
+Es decir: bucle, herramientas, escena viva, validación, idioma y undo único, funcionando.
+
+Lo que **sigue sin probarse** con un modelo real:
+
+| # | Qué pedir | Qué debería pasar |
+|---|---|---|
+| 1 | "Diseña una casa de 180 m² en un lote de 10 × 25 con 3 habitaciones y 2 baños" | Sale un **plan** con aplicar/descartar, no obra hecha |
+| 2 | Seleccionar un muro → "haz esto 20 cm más alto" | Afecta a ese muro y no a otro |
+| 3 | Adjuntar foto de un plano → "recréalo en 3D" | Lo no acotado marcado como estimado |
+| 4 | "Dame otras dos opciones y dime cuál es mejor" | Tres diseños guardados, veredicto razonado |
+| 5 | Lanzar algo largo y cancelar a mitad | Para y la escena queda coherente |
+| 6 | Recargar la página | El encargo sigue ahí (`localStorage`) |
+| 7 | Pedir un borrado | Tarjeta de confirmación antes de tocar nada |
 
 ```bash
 ./start.sh          # http://localhost:3002 → pestaña «Copilot»
@@ -307,13 +321,25 @@ Primera llamada real del proyecto a un modelo (2026-08-11, contra OpenRouter):
 | `nvidia/nemotron-nano-9b-v2:free` | 13.3 s | correcto |
 | `google/gemma-4-31b-it:free` | — | `rate_limited` |
 
-Dos cosas aprendidas:
+Tres cosas aprendidas:
 
 - Los gratis **sí** hacen tool calling bien. El cuello es el rate limit, no la capacidad.
 - Gemma repite el primer punto para cerrar el anillo. `Polygon` ahora lo descarta: si no,
   se creaba un muro de longitud cero que la revisión de diseño achacaba al usuario.
+- **Los schemas de Zod no valen tal cual.** Las APIs de function calling aceptan un dialecto
+  mucho más pequeño y rechazan la lista **entera** en vez de ignorar lo que no conocen:
 
-Si el agente se atasca, cambiar de modelo en el selector antes de sospechar del código.
+  ```
+  properties[start].items: missing field          ← prefixItems (tuplas)
+  unsupported assertions or reserved metadata     ← propertyNames, pattern, default…
+  ```
+
+  `normalizeJsonSchema` recorta a una lista blanca. **El schema anunciado es una pista; Zod
+  es la puerta** — quitar `minimum` no deja pasar un valor malo, porque `registry.execute`
+  sigue parseando contra el schema completo.
+
+Si el agente se atasca, cambiar de modelo en el selector antes de sospechar del código:
+los rate limits del gratis son frecuentes y se ven igual que un fallo.
 
 ### 5. Deudas conocidas
 

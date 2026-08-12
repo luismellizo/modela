@@ -51,6 +51,73 @@ describe('tool registry', () => {
     }
   })
 
+  test('specs carry only keywords every provider accepts', () => {
+    // Both refusals below were observed live against free models, and each one
+    // rejected the *entire* tool list rather than ignoring what it did not know:
+    //   "properties[start].items: missing field"            → prefixItems
+    //   "unsupported assertions or reserved metadata"       → propertyNames,
+    //                                                          pattern, etc.
+    const forbidden = [
+      'prefixItems',
+      '$schema',
+      'propertyNames',
+      'exclusiveMinimum',
+      'exclusiveMaximum',
+      'pattern',
+      'minLength',
+      'maxLength',
+      'additionalProperties',
+      'anyOf',
+      'allOf',
+    ]
+    const serialised = JSON.stringify(registry.specs())
+
+    for (const keyword of forbidden) {
+      expect(serialised, `"${keyword}" must not reach a provider`).not.toContain(`"${keyword}"`)
+    }
+  })
+
+  test('what survives is still enough for the model to work with', () => {
+    const room = registry.specs().find((spec) => spec.name === 'create_room')
+    const properties = (
+      room?.parameters as { properties?: Record<string, Record<string, unknown>> }
+    )?.properties
+
+    // Types, descriptions and required-ness are the parts that actually guide it.
+    expect(properties?.name?.type).toBe('string')
+    expect(properties?.polygon?.type).toBe('array')
+    expect((room?.parameters as { required?: string[] })?.required).toContain('name')
+    expect(String(properties?.polygon?.description)).toContain('metres')
+  })
+
+  test('a dropped assertion is still enforced by Zod', async () => {
+    // `minLength` no longer reaches the model, so the schema must still be the
+    // thing that refuses a bad value — otherwise stripping it would be a hole.
+    const outcome = await call('create_room', {
+      name: '',
+      polygon: [
+        [0, 0],
+        [3, 0],
+        [3, 3],
+      ],
+      levelId,
+    })
+
+    expect(outcome.ok).toBe(false)
+    if (!outcome.ok) expect(outcome.code).toBe('invalid_arguments')
+  })
+
+  test('tuple arguments still declare their length', () => {
+    const wall = registry.specs().find((spec) => spec.name === 'create_wall')
+    const start = (wall?.parameters as { properties?: Record<string, Record<string, unknown>> })
+      ?.properties?.start
+
+    expect(start?.type).toBe('array')
+    expect(start?.minItems).toBe(2)
+    expect(start?.maxItems).toBe(2)
+    expect((start?.items as { type?: string })?.type).toBe('number')
+  })
+
   test('unknown tool fails without throwing', async () => {
     const outcome = await call('demolish_everything', {})
     expect(outcome.ok).toBe(false)
